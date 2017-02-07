@@ -311,6 +311,7 @@ function depend(component, watches) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.getAllListeningControllers = exports.find = exports.walkReactParents = exports.dependency = exports.depend = exports.attach = undefined;
 
 var _attach = __webpack_require__(0);
 
@@ -320,6 +321,12 @@ var _depend = __webpack_require__(1);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+exports.attach = _attach2.default;
+exports.depend = _depend.depend;
+exports.dependency = _depend.dependency;
+exports.walkReactParents = _depend.walkReactParents;
+exports.find = _depend.find;
+exports.getAllListeningControllers = _depend.getAllListeningControllers;
 exports.default = {
   attach: _attach2.default,
   depend: _depend.depend,
