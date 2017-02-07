@@ -1,0 +1,70 @@
+{
+  "name": "react-ringa",
+  "version": "0.0.1",
+  "description": "Ringa plugin for React",
+  "main": "./dist/react-ringa.min.js",
+  "directories": {
+    "src": "src"
+  },
+  "scripts": {
+    "test": "jest --config jest.json",
+    "build": "npm run dist && npm run dev",
+    "dist": "webpack --progress --colors --config build/webpack.dist.js",
+    "dev": "webpack --progress --colors --config build/webpack.dev.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jung-digital/ringa.git"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "keywords": [
+    "react",
+    "reactjs",
+    "binding",
+    "framework",
+    "mvc",
+    "async",
+    "chaining",
+    "promise",
+    "data",
+    "state",
+    "ioc",
+    "redux",
+    "flux"
+  ],
+  "authors": [
+    "Joshua Jung <joshua.p.jung@gmail.com> (https://github.com/joshjung)"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jung-digital/react-ringa/issues"
+  },
+  "homepage": "https://github.com/jung-digital/react-ringa#readme",
+  "npmName": "react-ringa",
+  "npmFileMap": [
+    {
+      "basePath": "/dist/",
+      "files": [
+        "*.js"
+      ]
+    }
+  ],
+  "dependencies": {
+  },
+  "devDependencies": {
+    "babel-core": "^6.22.1",
+    "babel-loader": "^6.2.10",
+    "babel-jest": "^18.0.0",
+    "babel-polyfill": "^6.22.0",
+    "babel-preset-es2015": "^6.22.0",
+    "babel-preset-react": "^6.22.0",
+    "jest": "^18.1.0",
+    "react": "^15.4.2",
+    "react-addons-test-utils": "^15.4.2",
+    "react-test-renderer": "^15.4.2",
+    "webpack": "^2.2.0"
+  }
+}

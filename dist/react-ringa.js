@@ -1,0 +1,335 @@
+(function webpackUniversalModuleDefinition(root, factory) {
+	if(typeof exports === 'object' && typeof module === 'object')
+		module.exports = factory();
+	else if(typeof define === 'function' && define.amd)
+		define([], factory);
+	else if(typeof exports === 'object')
+		exports["React Ringa"] = factory();
+	else
+		root["React Ringa"] = factory();
+})(this, function() {
+return /******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+/******/
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId])
+/******/ 			return installedModules[moduleId].exports;
+/******/
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			i: moduleId,
+/******/ 			l: false,
+/******/ 			exports: {}
+/******/ 		};
+/******/
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/
+/******/ 		// Flag the module as loaded
+/******/ 		module.l = true;
+/******/
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/
+/******/
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+/******/
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+/******/
+/******/ 	// identity function for calling harmony imports with the correct context
+/******/ 	__webpack_require__.i = function(value) { return value; };
+/******/
+/******/ 	// define getter function for harmony exports
+/******/ 	__webpack_require__.d = function(exports, name, getter) {
+/******/ 		if(!__webpack_require__.o(exports, name)) {
+/******/ 			Object.defineProperty(exports, name, {
+/******/ 				configurable: false,
+/******/ 				enumerable: true,
+/******/ 				get: getter
+/******/ 			});
+/******/ 		}
+/******/ 	};
+/******/
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = function(module) {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			function getDefault() { return module['default']; } :
+/******/ 			function getModuleExports() { return module; };
+/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		return getter;
+/******/ 	};
+/******/
+/******/ 	// Object.prototype.hasOwnProperty.call
+/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+/******/
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "/";
+/******/
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(__webpack_require__.s = 2);
+/******/ })
+/************************************************************************/
+/******/ ([
+/* 0 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = attach;
+/**
+ * This function attaches a Ringa Controller to a specific React.Component and a selected DOM node within that component.
+ *
+ * Note that a Ringa controller is attached to a React Component when componentDidMount is called on the component.
+ *
+ * @param component The React Component to attach to.
+ * @param controller The Ringa Controller to attach when a DOM node is available.
+ * @param refName The React component reference name.
+ * @param callback The function to call whenever the controller has been attached.
+ */
+function attach(component, controller) {
+  var _ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
+      _ref$refName = _ref.refName,
+      refName = _ref$refName === undefined ? 'ringaComponent' : _ref$refName,
+      _ref$callback = _ref.callback,
+      callback = _ref$callback === undefined ? undefined : _ref$callback;
+
+  var _componentDidMount = void 0;
+
+  if (component.componentDidMount) {
+    _componentDidMount = component.componentDidMount.bind(component);
+  }
+
+  component.$ringaControllers = component.$ringaControllers || [];
+  component.$ringaControllers.push(controller);
+
+  component.componentDidMount = function () {
+    if (!component.refs || !component.refs[refName]) {
+      console.warn('Error attaching Controller to React Component. Component reference ' + refName + ' does not exist.');
+
+      return;
+    }
+
+    controller.bus = component.refs[refName];
+
+    if (_componentDidMount) {
+      _componentDidMount();
+    }
+
+    if (callback) {
+      callback();
+    }
+  };
+}
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.dependency = dependency;
+exports.find = find;
+exports.getAllListeningControllers = getAllListeningControllers;
+exports.depend = depend;
+/**
+ * Walks the React Components up through the parent heirarchy.
+ *
+ * @param component A React Component instance.
+ * @param callback A callback to call for each component in the ancestors.
+ */
+var walkReactParents = exports.walkReactParents = function walkReactParents(component, callback) {
+  while (component) {
+    callback(component);
+
+    try {
+      component = component._currentElement._owner._instance;
+    } catch (e) {
+      component = null;
+    }
+  }
+};
+
+/**
+ * Builds a dependency object for use with the depend function.
+ *
+ * @param classOrId A Class that extends Ringa.Model or a string id of a model you are looking for.
+ * @param propertyPath A dot-delimited path into a property on the model. Or undefined if you want the model itself.
+ * @param setOnState When true (default), the property will be set on the state of the component, forcing an update.
+ *
+ * @returns {{classOrId: *, propertyPath: *, setOnState: boolean}}
+ */
+function dependency(classOrId, propertyPath) {
+  var setOnState = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+
+  return {
+    classOrId: classOrId,
+    propertyPath: propertyPath,
+    setOnState: setOnState
+  };
+}
+
+/**
+ * Finds a Ringa.Model or a specific property, given the context of the provided React Component.
+ *
+ * @param component A React Component instance.
+ * @param classOrId A Class that extends Ringa.Model or a string id of a model you are looking for.
+ * @param propertyPath A dot-delimited path into a property on the model. Or undefined if you want the model itself.
+ * @returns {*}
+ */
+function find(component, classOrId) {
+  var propertyPath = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : undefined;
+
+  var controllers = getAllListeningControllers(component);
+  var value = void 0;
+
+  for (var i = 0; i < controllers.length; i++) {
+    var controller = controllers[i];
+    var mw = controller.modelWatcher;
+
+    if (mw) {
+      return mw.find(classOrId, propertyPath);
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Returns all Ringa.Controller instances that will hear when you dispatch an event from any of the provided React component's
+ * DOM nodes or its descendants.
+ *
+ * @param component A React Component instance.
+ * @returns {Array}
+ */
+function getAllListeningControllers(component) {
+  var controllers = [];
+
+  walkReactParents(component, function (c) {
+    if (c.$ringaControllers && c.$ringaControllers.length) {
+      controllers = controllers.concat(c.$ringaControllers);
+    }
+  });
+
+  return controllers;
+}
+
+/**
+ * Listens for changes on the provided React Component anywhere in its ancestor tree of Controllers for the requested Ringa.Model and,
+ * if desired specific property path, changes. See getAllListeningControllers for information on the controllers and their models
+ * that this will depend upon.
+ *
+ * Example:
+ *
+ * import {depend, dependency} from 'react-ringa';
+ *
+ * class MyComponent extends React.Component {
+ *   constructor() {
+ *     super();
+ *
+ *     depend(this, dependency('myModelId', 'some.property'));
+ *   }
+ * }
+ *
+ * @param component A React Component instance.
+ * @param watches An individual or Array of dependency objects. See
+ * @param handler A function to callback immediately with all the dependencies that are found right now.
+ *
+ * @returns {Array}
+ */
+function depend(component, watches) {
+  var handler = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : undefined;
+
+  var controllers = getAllListeningControllers(component);
+
+  watches = watches instanceof Array ? watches : [watches];
+
+  var notifications = [];
+
+  watches.forEach(function (watch) {
+    controllers.forEach(function (controller) {
+      var mw = controller.modelWatcher;
+      if (mw) {
+        var model = mw.find(watch.classOrId);
+        var value = mw.find(watch.classOrId, watch.propertyPath);
+
+        if (model && value) {
+          notifications.push({
+            model: model,
+            value: value
+          });
+        }
+
+        var changeHandler = function (watch, change) {
+          change = change[0];
+
+          if (watch.setOnState) {
+            var state = {};
+            var prop = change.model.id;
+            if (change.watchedPath) {
+              var s = change.watchedPath.split('.');
+              prop = s[s.length - 1];
+            }
+            state[prop] = change.watchedValue;
+            component.setState(state);
+          }
+        }.bind(undefined, watch);
+
+        mw.watch(watch.classOrId, watch.propertyPath, changeHandler);
+      }
+    });
+  });
+
+  if (notifications && notifications.length && handler) {
+    handler(notifications);
+  }
+
+  return notifications;
+}
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _attach = __webpack_require__(0);
+
+var _attach2 = _interopRequireDefault(_attach);
+
+var _depend = __webpack_require__(1);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+exports.default = {
+  attach: _attach2.default,
+  depend: _depend.depend,
+  dependency: _depend.dependency,
+  walkReactParents: _depend.walkReactParents,
+  find: _depend.find,
+  getAllListeningControllers: _depend.getAllListeningControllers
+};
+
+/***/ })
+/******/ ]);
+});
+//# sourceMappingURL=react-ringa.js.map
