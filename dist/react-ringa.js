@@ -142,6 +142,7 @@ function attach(component, controller) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.walkReactParents = walkReactParents;
 exports.dependency = dependency;
 exports.find = find;
 exports.getAllListeningControllers = getAllListeningControllers;
@@ -152,9 +153,17 @@ exports.depend = depend;
  * @param component A React Component instance.
  * @param callback A callback to call for each component in the ancestors.
  */
-var walkReactParents = exports.walkReactParents = function walkReactParents(component, callback) {
+function walkReactParents(component, callback) {
+  var ancestors = [];
+
+  if (component._reactInternalInstance) {
+    ancestors.push(component);
+
+    component = component._reactInternalInstance;
+  }
+
   while (component) {
-    callback(component);
+    ancestors.push(component);
 
     try {
       component = component._currentElement._owner._instance;
@@ -162,6 +171,10 @@ var walkReactParents = exports.walkReactParents = function walkReactParents(comp
       component = null;
     }
   }
+
+  ancestors.forEach(callback);
+
+  return ancestors;
 };
 
 /**
@@ -254,51 +267,88 @@ function getAllListeningControllers(component) {
 function depend(component, watches) {
   var handler = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : undefined;
 
-  var controllers = getAllListeningControllers(component);
+  var _componentWillMount = void 0;
 
-  watches = watches instanceof Array ? watches : [watches];
-
-  var notifications = [];
-
-  watches.forEach(function (watch) {
-    controllers.forEach(function (controller) {
-      var mw = controller.modelWatcher;
-      if (mw) {
-        var model = mw.find(watch.classOrId);
-        var value = mw.find(watch.classOrId, watch.propertyPath);
-
-        if (model && value) {
-          notifications.push({
-            model: model,
-            value: value
-          });
-        }
-
-        var changeHandler = function (watch, change) {
-          change = change[0];
-
-          if (watch.setOnState) {
-            var state = {};
-            var prop = change.model.id;
-            if (change.watchedPath) {
-              var s = change.watchedPath.split('.');
-              prop = s[s.length - 1];
-            }
-            state[prop] = change.watchedValue;
-            component.setState(state);
-          }
-        }.bind(undefined, watch);
-
-        mw.watch(watch.classOrId, watch.propertyPath, changeHandler);
-      }
-    });
-  });
-
-  if (notifications && notifications.length && handler) {
-    handler(notifications);
+  if (component.componentWillMount) {
+    _componentWillMount = component.componentWillMount.bind(component);
   }
 
-  return notifications;
+  component.componentWillMount = function () {
+    var controllers = getAllListeningControllers(component);
+
+    if (!controllers.length) {
+      console.error('react-ringa depend(): could not find any Ringa Controllers in the ancestors of ' + component.constructor.name + ', the following dependencies will NOT work: ', watches, component);
+
+      return;
+    }
+
+    watches = watches instanceof Array ? watches : [watches];
+
+    var notifications = [];
+
+    watches.forEach(function (watch) {
+      controllers.forEach(function (controller) {
+        var mw = controller.modelWatcher;
+        if (mw) {
+          // TODO aggregate so that we don't call watch twice.
+          var model = mw.find(watch.classOrId);
+          var value = mw.find(watch.classOrId, watch.propertyPath);
+
+          // Create Change Handler
+          var changeHandler = function (watch, changes) {
+            var newState = {};
+
+            var skipUpdate = component.dependencyDidChange ? component.dependencyDidChange(change, watch) : undefined;
+
+            if (skipUpdate === undefined && watch.setOnState) {
+              changes.forEach(function (change) {
+
+                var state = {};
+                var prop = change.model.name;
+                if (change.setProp) {
+                  prop = change.setProp;
+                } else if (change.watchedPath) {
+                  var s = change.watchedPath.split('.');
+                  prop = s[s.length - 1];
+                }
+
+                state[prop] = change.watchedValue;
+
+                newState = Object.assign(newState, state);
+              });
+
+              component.setState(newState);
+            }
+          }.bind(undefined, watch);
+
+          // Handle initial property value
+          if (model !== undefined && value !== null) {
+            notifications.push({
+              model: model,
+              value: value
+            });
+
+            changeHandler([{
+              model: model,
+              value: value,
+              watchedPath: watch.propertyPath,
+              watchedValue: value
+            }]);
+          }
+
+          mw.watch(watch.classOrId, watch.propertyPath, changeHandler);
+        }
+      });
+    });
+
+    if (notifications && notifications.length && handler) {
+      handler(notifications);
+    }
+
+    if (_componentWillMount) {
+      _componentWillMount();
+    }
+  };
 }
 
 /***/ }),
