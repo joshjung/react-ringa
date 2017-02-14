@@ -115,7 +115,7 @@ function attach(component, controller) {
 
   component.componentDidMount = function () {
     if (!component.refs || !component.refs[refName]) {
-      console.warn('Error attaching Controller to React Component. Component reference ' + refName + ' does not exist.');
+      console.warn('attach(): Error attaching Ringa Controller to React Component ' + component.constructor.name + '. Component reference named \'' + refName + '\' does not exist.');
 
       return;
     }
