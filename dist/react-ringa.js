@@ -73,7 +73,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "/";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 2);
+/******/ 	return __webpack_require__(__webpack_require__.s = 3);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -361,11 +361,42 @@ function depend(component, watches) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.getAllListeningControllers = exports.find = exports.walkReactParents = exports.dependency = exports.depend = exports.attach = undefined;
+exports.default = watch;
+function watch(reactComponent, model, callback) {
+  if (model) {
+    if (!model.watch) {
+      throw new Error("react-ringa watch(): the provided object is not a Ringa Model '" + model + "'");
+    }
+
+    model.watch(function (path) {
+      reactComponent.forceUpdate();
+
+      if (callback) {
+        callback.apply(undefined, [path]);
+      }
+    });
+  }
+}
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.watch = exports.getAllListeningControllers = exports.find = exports.walkReactParents = exports.dependency = exports.depend = exports.attach = undefined;
 
 var _attach = __webpack_require__(0);
 
 var _attach2 = _interopRequireDefault(_attach);
+
+var _watch = __webpack_require__(2);
+
+var _watch2 = _interopRequireDefault(_watch);
 
 var _depend = __webpack_require__(1);
 
@@ -377,13 +408,15 @@ exports.dependency = _depend.dependency;
 exports.walkReactParents = _depend.walkReactParents;
 exports.find = _depend.find;
 exports.getAllListeningControllers = _depend.getAllListeningControllers;
+exports.watch = _watch2.default;
 exports.default = {
   attach: _attach2.default,
   depend: _depend.depend,
   dependency: _depend.dependency,
   walkReactParents: _depend.walkReactParents,
   find: _depend.find,
-  getAllListeningControllers: _depend.getAllListeningControllers
+  getAllListeningControllers: _depend.getAllListeningControllers,
+  watch: _watch2.default
 };
 
 /***/ })

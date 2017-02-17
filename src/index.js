@@ -1,7 +1,8 @@
 import attach from './attach';
+import watch from './watch';
 import {depend, dependency, walkReactParents, find, getAllListeningControllers} from './depend';
 
-export {attach, depend, dependency, walkReactParents, find, getAllListeningControllers};
+export {attach, depend, dependency, walkReactParents, find, getAllListeningControllers, watch};
 
 export default {
   attach,
@@ -9,5 +10,6 @@ export default {
   dependency,
   walkReactParents,
   find,
-  getAllListeningControllers
+  getAllListeningControllers,
+  watch
 };
