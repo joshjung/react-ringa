@@ -176,7 +176,6 @@ function walkReactParents(component, callback) {
     }
   }
 
-  console.log(ancestors);
   ancestors.forEach(callback);
 
   return ancestors;
@@ -278,6 +277,10 @@ function depend(component, watches) {
     _componentWillMount = component.componentWillMount.bind(component);
   }
 
+  if (component.state === undefined) {
+    component.state = {};
+  }
+
   component.componentWillMount = function () {
     var controllers = getAllListeningControllers(component);
 
@@ -303,7 +306,11 @@ function depend(component, watches) {
           var changeHandler = function (watch, changes) {
             var newState = {};
 
-            var skipUpdate = component.dependencyDidChange ? component.dependencyDidChange(change, watch) : undefined;
+            var skipUpdate = undefined;
+
+            if (handler) {
+              skipUpdate = handler(changes);
+            }
 
             if (skipUpdate === undefined && watch.setOnState) {
               changes.forEach(function (change) {
