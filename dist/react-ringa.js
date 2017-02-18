@@ -165,6 +165,10 @@ function walkReactParents(component, callback) {
   while (component) {
     ancestors.push(component);
 
+    if (component._reactInternalInstance) {
+      component = component._reactInternalInstance;
+    }
+
     try {
       component = component._currentElement._owner._instance;
     } catch (e) {
@@ -172,6 +176,7 @@ function walkReactParents(component, callback) {
     }
   }
 
+  console.log(ancestors);
   ancestors.forEach(callback);
 
   return ancestors;
