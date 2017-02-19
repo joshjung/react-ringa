@@ -240,15 +240,15 @@ function dependency(classOrId, propertyPath) {
 /**
  * Finds a Ringa.Model or a specific property, given the context of the provided React Component.
  *
- * @param component A React Component instance.
+ * @param reactComponent A React Component instance.
  * @param classOrId A Class that extends Ringa.Model or a string id of a model you are looking for.
  * @param propertyPath A dot-delimited path into a property on the model. Or undefined if you want the model itself.
  * @returns {*}
  */
-function find(component, classOrId) {
+function find(reactComponent, classOrId) {
   var propertyPath = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : undefined;
 
-  var controllers = getAllListeningControllers(component);
+  var controllers = getAllListeningControllers(reactComponent);
   var value = void 0;
 
   for (var i = 0; i < controllers.length; i++) {
@@ -256,7 +256,11 @@ function find(component, classOrId) {
     var mw = controller.modelWatcher;
 
     if (mw) {
-      return mw.find(classOrId, propertyPath);
+      var _value = mw.find(classOrId, propertyPath);
+
+      if (_value) {
+        return _value;
+      }
     }
   }
 

@@ -54,13 +54,13 @@ export function dependency(classOrId, propertyPath, setOnState = true) {
 /**
  * Finds a Ringa.Model or a specific property, given the context of the provided React Component.
  *
- * @param component A React Component instance.
+ * @param reactComponent A React Component instance.
  * @param classOrId A Class that extends Ringa.Model or a string id of a model you are looking for.
  * @param propertyPath A dot-delimited path into a property on the model. Or undefined if you want the model itself.
  * @returns {*}
  */
-export function find(component, classOrId, propertyPath = undefined) {
-  let controllers = getAllListeningControllers(component);
+export function find(reactComponent, classOrId, propertyPath = undefined) {
+  let controllers = getAllListeningControllers(reactComponent);
   let value;
 
   for (let i = 0; i < controllers.length; i++) {
@@ -68,7 +68,11 @@ export function find(component, classOrId, propertyPath = undefined) {
     let mw = controller.modelWatcher;
 
     if (mw) {
-      return mw.find(classOrId, propertyPath);
+      let value = mw.find(classOrId, propertyPath);
+
+      if (value) {
+        return value;
+      }
     }
   }
 
