@@ -73,11 +73,41 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "/";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 3);
+/******/ 	return __webpack_require__(__webpack_require__.s = 4);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = queueState;
+function queueState(reactComponent, newState) {
+  if (!reactComponent.state) {
+    reactComponent.state = newState;
+    return;
+  }
+
+  reactComponent.__ringaStateQueue = reactComponent.__ringaStateQueue || {};
+  reactComponent.__ringaStateQueue = Object.assign(reactComponent.__ringaStateQueue, newState);
+
+  if (reactComponent.__ringaStateQueueTimeout) {
+    return;
+  }
+
+  reactComponent.__ringaStateQueueTimeout = setTimeout(function () {
+    reactComponent.__ringaStateQueueTimeout = 0;
+    reactComponent.setState(reactComponent.__ringaStateQueue);
+  }, 1);
+}
+
+/***/ }),
+/* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -133,7 +163,7 @@ function attach(component, controller) {
 }
 
 /***/ }),
-/* 1 */
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -147,6 +177,13 @@ exports.dependency = dependency;
 exports.find = find;
 exports.getAllListeningControllers = getAllListeningControllers;
 exports.depend = depend;
+
+var _queueState = __webpack_require__(0);
+
+var _queueState2 = _interopRequireDefault(_queueState);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 /**
  * Walks the React Components up through the parent heirarchy.
  *
@@ -329,7 +366,7 @@ function depend(component, watches) {
                 newState = Object.assign(newState, state);
               });
 
-              component.setState(newState);
+              (0, _queueState2.default)(component, newState);
             }
           }.bind(undefined, watch);
 
@@ -364,7 +401,7 @@ function depend(component, watches) {
 }
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -374,24 +411,43 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = watch;
+
+var _queueState = __webpack_require__(0);
+
+var _queueState2 = _interopRequireDefault(_queueState);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 function watch(reactComponent, model, callback) {
   if (model) {
     if (!model.watch) {
-      throw new Error("react-ringa watch(): the provided object is not a Ringa Model '" + model + "'");
+      throw new Error('react-ringa watch(): the provided object is not a Ringa Model \'' + model + '\'');
     }
 
     model.watch(function (path) {
-      reactComponent.forceUpdate();
+      var fu = void 0;
 
       if (callback) {
-        callback.apply(undefined, [path]);
+        fu = callback.apply(undefined, [path]);
+      }
+
+      if (fu === undefined) {
+        var _o = {};
+        _o[model.name] = model;
+        (0, _queueState2.default)(reactComponent, _o);
       }
     });
+
+    // Initial setup
+    var o = {};
+    o[model.name] = model;
+
+    (0, _queueState2.default)(reactComponent, o);
   }
 }
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -402,15 +458,15 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.watch = exports.getAllListeningControllers = exports.find = exports.walkReactParents = exports.dependency = exports.depend = exports.attach = undefined;
 
-var _attach = __webpack_require__(0);
+var _attach = __webpack_require__(1);
 
 var _attach2 = _interopRequireDefault(_attach);
 
-var _watch = __webpack_require__(2);
+var _watch = __webpack_require__(3);
 
 var _watch2 = _interopRequireDefault(_watch);
 
-var _depend = __webpack_require__(1);
+var _depend = __webpack_require__(2);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 

@@ -1,3 +1,5 @@
+import queueState from './queueState';
+
 /**
  * Walks the React Components up through the parent heirarchy.
  *
@@ -174,7 +176,7 @@ export function depend(component, watches, handler = undefined) {
                 newState = Object.assign(newState, state);
               });
 
-              component.setState(newState);
+              queueState(component, newState);
             }
           }.bind(undefined, watch);
 

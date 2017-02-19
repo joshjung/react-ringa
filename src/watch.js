@@ -1,3 +1,5 @@
+import queueState from './queueState';
+
 export default function watch(reactComponent, model, callback) {
   if (model) {
     if (!model.watch) {
@@ -5,11 +7,23 @@ export default function watch(reactComponent, model, callback) {
     }
 
     model.watch((path) => {
-      reactComponent.forceUpdate();
+      let fu;
 
       if (callback) {
-        callback.apply(undefined, [path]);
+        fu = callback.apply(undefined, [path]);
+      }
+
+      if (fu === undefined) {
+        let o = {};
+        o[model.name] = model;
+        queueState(reactComponent, o);
       }
     });
+
+    // Initial setup
+    let o = {};
+    o[model.name] = model;
+
+    queueState(reactComponent, o);
   }
 }
