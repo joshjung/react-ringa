@@ -10,7 +10,10 @@
     "test": "jest --config jest.json",
     "build": "npm run dist && npm run dev",
     "dist": "webpack --progress --colors --config build/webpack.dist.js",
-    "dev": "webpack --progress --colors --config build/webpack.dev.js"
+    "dev": "webpack --progress --colors --config build/webpack.dev.js",
+    "release:major": "npm version major && npm publish && git push --follow-tags",
+    "release:minor": "npm version minor && npm publish && git push --follow-tags",
+    "release:patch": "npm version patch && npm publish && git push --follow-tags"
   },
   "repository": {
     "type": "git",
