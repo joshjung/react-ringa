@@ -43,11 +43,12 @@ export function walkReactParents(component, callback) {
  *
  * @returns {{classOrId: *, propertyPath: *, setOnState: boolean}}
  */
-export function dependency(classOrId, propertyPath, setOnState = true) {
+export function dependency(classOrId, propertyPath = undefined, setOnState = true, setOnComponent = false) {
   return {
     classOrId,
     propertyPath,
-    setOnState
+    setOnState,
+    setOnComponent
   };
 }
 
@@ -143,70 +144,92 @@ export function depend(component, watches, handler = undefined) {
 
     watches = watches instanceof Array ? watches : [watches];
 
-    let notifications = [];
-
     watches.forEach(watch => {
+      let foundModels = [];
+
       controllers.forEach(controller => {
         let mw = controller.modelWatcher;
+
         if (mw) {
-          // TODO aggregate so that we don't call watch twice.
           let model = mw.find(watch.classOrId);
-          let value = mw.find(watch.classOrId, watch.propertyPath);
 
-          // Create Change Handler
-          let changeHandler = function(watch, changes) {
-            let newState = {};
-
-            let skipUpdate = undefined;
-
-            if (handler) {
-              skipUpdate = handler(changes);
-            }
-
-            if (skipUpdate === undefined && watch.setOnState) {
-              changes.forEach(change => {
-
-                let state = {};
-                let prop = change.model.name;
-                if (change.setProp) {
-                  prop = change.setProp;
-                } else if (change.watchedPath) {
-                  let s = change.watchedPath.split('.');
-                  prop = s[s.length - 1];
-                }
-
-                state[prop] = change.watchedValue;
-
-                newState = Object.assign(newState, state);
-              });
-
-              queueState(component, newState);
-            }
-          }.bind(undefined, watch);
-
-          // Handle initial property value
-          if (model !== undefined && value !== null) {
-            notifications.push({
-              model,
-              value
-            });
-
-            changeHandler([{
-              model,
-              value,
-              watchedPath: watch.propertyPath,
-              watchedValue: value
-            }]);
+          if (!model) {
+            return;
           }
 
-          mw.watch(watch.classOrId, watch.propertyPath, changeHandler);
+          foundModels.push(model);
+
+          if (foundModels.length > 1) {
+            console.warn(`depend(): found two models while looking for a dependency on '${component.constructor.name}'! Watch is:\n`, watch, `found these models:\n`, foundModels, `depend() looks for the closest model it can find that matches the watch criteria. This means you might have a serious error in your stack. Proceeding as normal.`);
+          }
+
+          // By default the model we are requesting automatically gets set on the state no matter what for
+          // easy access. However, we don't watch the entire model because that would be silliness. Each view
+          // component should request the specific signals it wants to watch.
+          let s = {};
+          s[watch.setProperty || model.name] = model;
+          queueState(component, s);
+
+          let value, changeHandler;
+
+          // If the user is just asking for the model (no propertyPath), we can skip all the watching jargon.
+          if (watch.propertyPath) {
+
+            let pp = watch.propertyPath instanceof Array ? watch.propertyPath : [watch.propertyPath];
+
+            pp.forEach(propertyPath => {
+              value = mw.find(watch.classOrId, propertyPath);
+
+              // Create Change Handler. Note we do not use an arrow function here to save memory.
+              changeHandler = function (watch, changes) {
+                let skipUpdate = handler ? handler(changes) : undefined;
+
+                if (skipUpdate === undefined && watch.setOnState) {
+                  let newState = {};
+
+                  changes.forEach(change => {
+                    let state = {};
+                    let prop = change.model.name;
+
+                    if (watch.setProperty) {
+                      prop = watch.setProperty; // Can specify a custom property in the dependency to set on the state for each change.
+                    } if (change.watchedPath) {
+                      try {
+                        let s = change.watchedPath.split('.');
+                        prop = s[s.length - 1];
+                      } catch (error) {
+                        console.error(`depend(): property was updated but watched path was invalid. watchedPath was:`, change.watchedPath);
+                      }
+                    }
+
+                    state[prop] = change.watchedValue;
+
+                    newState = Object.assign(newState, state);
+                  });
+
+                  queueState(component, newState);
+                }
+              }.bind(undefined, watch);
+
+              mw.watch(watch.classOrId, propertyPath, changeHandler);
+
+              if (changeHandler) {
+                changeHandler([{
+                  model,
+                  value,
+                  watchedPath: propertyPath,
+                  watchedValue: value
+                }]);
+              }
+            });
+          }
         }
       });
-    });
 
-    if (notifications && notifications.length && handler) {
-      handler(notifications);
-    }
+      if (!foundModels.length) {
+        console.error(`depend(): could not find the model`, watch.classOrIdOrArray.name, `in any ancestor Controllers of React component`, component.constructor.name, component, `during the componentDidMount() phase. Found these instantiated and attached controllers`, controllers);
+      }
+    });
 
     if (_componentWillMount) {
       _componentWillMount();

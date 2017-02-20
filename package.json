@@ -2,7 +2,7 @@
   "name": "react-ringa",
   "version": "0.0.28",
   "description": "Ringa plugin for React",
-  "main": "./dist/react-ringa.min.js",
+  "main": "./dist/react-ringa.js",
   "directories": {
     "src": "src"
   },

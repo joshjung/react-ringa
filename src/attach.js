@@ -9,7 +9,6 @@
  * @param callback The function to call whenever the controller has been attached.
  */
 export default function attach(component, controller, { refName = 'ringaComponent', callback = undefined } = {}) {
-
   let _componentDidMount;
 
   if (component.componentDidMount) {
