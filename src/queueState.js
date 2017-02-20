@@ -14,5 +14,5 @@ export default function queueState(reactComponent, newState) {
   reactComponent.__ringaStateQueueTimeout = setTimeout(() => {
     reactComponent.__ringaStateQueueTimeout = 0;
     reactComponent.setState(reactComponent.__ringaStateQueue);
-  }, 1);
+  }, 0);
 }

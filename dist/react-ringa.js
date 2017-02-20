@@ -103,7 +103,7 @@ function queueState(reactComponent, newState) {
   reactComponent.__ringaStateQueueTimeout = setTimeout(function () {
     reactComponent.__ringaStateQueueTimeout = 0;
     reactComponent.setState(reactComponent.__ringaStateQueue);
-  }, 1);
+  }, 0);
 }
 
 /***/ }),
@@ -431,7 +431,7 @@ function depend(component, watches) {
       });
 
       if (!foundModels.length) {
-        console.error('depend(): could not find the model', watch.classOrIdOrArray.name, 'in any ancestor Controllers of React component', component.constructor.name, component, 'during the componentDidMount() phase. Found these instantiated and attached controllers', controllers);
+        console.error('depend(): could not find the model', watch.classOrId.name, 'in any ancestor Controllers of React component', component.constructor.name, component, 'during the componentDidMount() phase. Found these instantiated and attached controllers', controllers);
       }
     });
 
