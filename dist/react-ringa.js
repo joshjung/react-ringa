@@ -111,6 +111,7 @@ function queueState(reactComponent, newState) {
   reactComponent.__ringaStateQueueTimeout = setTimeout(function () {
     reactComponent.__ringaStateQueueTimeout = 0;
     reactComponent.setState(reactComponent.__ringaStateQueue);
+    delete reactComponent.__ringaStateQueue;
   }, 0);
 }
 

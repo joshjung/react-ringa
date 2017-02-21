@@ -21,5 +21,6 @@ export function queueState(reactComponent, newState) {
   reactComponent.__ringaStateQueueTimeout = setTimeout(() => {
     reactComponent.__ringaStateQueueTimeout = 0;
     reactComponent.setState(reactComponent.__ringaStateQueue);
+    delete reactComponent.__ringaStateQueue;
   }, 0);
 }
