@@ -8,14 +8,7 @@ export default function watch(reactComponent, model, callback) {
 
     let _componentWillUnmount = reactComponent.componentWillUnmount ? reactComponent.componentWillUnmount.bind(reactComponent) : undefined;
 
-    reactComponent.componentWillUnmount = () => {
-      unqueueState(reactComponent);
-
-      if (_componentWillUnmount) {
-        _componentWillUnmount();
-      }
-    };
-    model.watch((path) => {
+    let handler = (path) => {
       let fu;
 
       if (callback) {
@@ -27,7 +20,19 @@ export default function watch(reactComponent, model, callback) {
         o[model.name] = model;
         queueState(reactComponent, o);
       }
-    });
+    };
+
+    reactComponent.componentWillUnmount = () => {
+      unqueueState(reactComponent);
+
+      model.unwatch(handler);
+
+      if (_componentWillUnmount) {
+        _componentWillUnmount();
+      }
+    };
+
+    model.watch(handler);
 
     // Initial setup
     let o = {};

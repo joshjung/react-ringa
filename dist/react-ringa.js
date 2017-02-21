@@ -93,6 +93,8 @@ function unqueueState(reactComponent) {
     clearTimeout(reactComponent.__ringaStateQueueTimeout);
     delete reactComponent.__ringaStateQueueTimeout;
   }
+
+  delete reactComponent.__ringaStateQueue;
 }
 
 function queueState(reactComponent, newState) {
@@ -499,14 +501,7 @@ function watch(reactComponent, model, callback) {
 
       var _componentWillUnmount = reactComponent.componentWillUnmount ? reactComponent.componentWillUnmount.bind(reactComponent) : undefined;
 
-      reactComponent.componentWillUnmount = function () {
-        (0, _queueState.unqueueState)(reactComponent);
-
-        if (_componentWillUnmount) {
-          _componentWillUnmount();
-        }
-      };
-      model.watch(function (path) {
+      var handler = function handler(path) {
         var fu = void 0;
 
         if (callback) {
@@ -518,7 +513,19 @@ function watch(reactComponent, model, callback) {
           _o[model.name] = model;
           (0, _queueState.queueState)(reactComponent, _o);
         }
-      });
+      };
+
+      reactComponent.componentWillUnmount = function () {
+        (0, _queueState.unqueueState)(reactComponent);
+
+        model.unwatch(handler);
+
+        if (_componentWillUnmount) {
+          _componentWillUnmount();
+        }
+      };
+
+      model.watch(handler);
 
       // Initial setup
       var o = {};

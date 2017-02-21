@@ -3,6 +3,8 @@ export function unqueueState(reactComponent) {
     clearTimeout(reactComponent.__ringaStateQueueTimeout);
     delete reactComponent.__ringaStateQueueTimeout;
   }
+
+  delete reactComponent.__ringaStateQueue;
 }
 
 export function queueState(reactComponent, newState) {
