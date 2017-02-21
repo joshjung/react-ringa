@@ -86,7 +86,15 @@ return /******/ (function(modules) { // webpackBootstrap
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = queueState;
+exports.unqueueState = unqueueState;
+exports.queueState = queueState;
+function unqueueState(reactComponent) {
+  if (reactComponent.__ringaStateQueueTimeout) {
+    clearTimeout(reactComponent.__ringaStateQueueTimeout);
+    delete reactComponent.__ringaStateQueueTimeout;
+  }
+}
+
 function queueState(reactComponent, newState) {
   if (!reactComponent.state) {
     reactComponent.state = newState;
@@ -182,10 +190,6 @@ exports.getAllListeningControllers = getAllListeningControllers;
 exports.depend = depend;
 
 var _queueState = __webpack_require__(0);
-
-var _queueState2 = _interopRequireDefault(_queueState);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
  * Walks the React Components up through the parent heirarchy.
@@ -318,18 +322,41 @@ function getAllListeningControllers(component) {
 function depend(component, watches) {
   var handler = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : undefined;
 
-  var _componentWillMount = void 0;
+  var _componentWillMount = void 0,
+      _componentWillUnmount = void 0;
 
   if (component.componentWillMount) {
     _componentWillMount = component.componentWillMount.bind(component);
+  }
+
+  if (component.componentWillUnmount) {
+    _componentWillUnmount = component.componentWillUnmount.bind(component);
   }
 
   if (component.state === undefined) {
     component.state = {};
   }
 
+  var controllers = void 0;
+  var mws = [];
+
+  component.componentWillUnmount = function () {
+    (0, _queueState.unqueueState)(component);
+
+    /**
+     * When the component unmounts we want to unwatch everything.
+     */
+    mws.forEach(function (mwGroup) {
+      mwGroup.mw.unwatch(mwGroup.classOrId, mwGroup.propertyPath, mwGroup.changeHandler);
+    });
+
+    if (_componentWillUnmount) {
+      _componentWillUnmount();
+    }
+  };
+
   component.componentWillMount = function () {
-    var controllers = getAllListeningControllers(component);
+    controllers = getAllListeningControllers(component);
 
     if (!controllers.length) {
       console.error('react-ringa depend(): could not find any Ringa Controllers in the ancestors of ' + component.constructor.name + ', the following dependencies will NOT work: ', watches, component);
@@ -366,7 +393,7 @@ function depend(component, watches) {
             // component should request the specific signals it wants to watch.
             var s = {};
             s[watch.setProperty || model.name] = model;
-            (0, _queueState2.default)(component, s);
+            (0, _queueState.queueState)(component, s);
 
             var value = void 0,
                 changeHandler = void 0;
@@ -376,41 +403,48 @@ function depend(component, watches) {
 
               var pp = watch.propertyPath instanceof Array ? watch.propertyPath : [watch.propertyPath];
 
+              // Create Change Handler. Note we do not use an arrow function here to save memory.
+              changeHandler = function (watch, changes) {
+                var skipUpdate = handler ? handler(changes) : undefined;
+
+                if (skipUpdate === undefined && watch.setOnState) {
+                  (function () {
+                    var newState = {};
+
+                    changes.forEach(function (change) {
+                      var state = {};
+                      var prop = change.model.name;
+
+                      if (watch.setProperty) {
+                        prop = watch.setProperty; // Can specify a custom property in the dependency to set on the state for each change.
+                      }if (change.watchedPath) {
+                        try {
+                          var _s = change.watchedPath.split('.');
+                          prop = _s[_s.length - 1];
+                        } catch (error) {
+                          console.error('depend(): property was updated but watched path was invalid. watchedPath was:', change.watchedPath);
+                        }
+                      }
+
+                      state[prop] = change.watchedValue;
+
+                      newState = Object.assign(newState, state);
+                    });
+
+                    (0, _queueState.queueState)(component, newState);
+                  })();
+                }
+              }.bind(undefined, watch);
+
               pp.forEach(function (propertyPath) {
                 value = mw.find(watch.classOrId, propertyPath);
 
-                // Create Change Handler. Note we do not use an arrow function here to save memory.
-                changeHandler = function (watch, changes) {
-                  var skipUpdate = handler ? handler(changes) : undefined;
-
-                  if (skipUpdate === undefined && watch.setOnState) {
-                    (function () {
-                      var newState = {};
-
-                      changes.forEach(function (change) {
-                        var state = {};
-                        var prop = change.model.name;
-
-                        if (watch.setProperty) {
-                          prop = watch.setProperty; // Can specify a custom property in the dependency to set on the state for each change.
-                        }if (change.watchedPath) {
-                          try {
-                            var _s = change.watchedPath.split('.');
-                            prop = _s[_s.length - 1];
-                          } catch (error) {
-                            console.error('depend(): property was updated but watched path was invalid. watchedPath was:', change.watchedPath);
-                          }
-                        }
-
-                        state[prop] = change.watchedValue;
-
-                        newState = Object.assign(newState, state);
-                      });
-
-                      (0, _queueState2.default)(component, newState);
-                    })();
-                  }
-                }.bind(undefined, watch);
+                mws.push({
+                  mw: mw,
+                  classOrId: watch.classOrId,
+                  propertyPath: propertyPath,
+                  changeHandler: changeHandler
+                });
 
                 mw.watch(watch.classOrId, propertyPath, changeHandler);
 
@@ -455,35 +489,42 @@ exports.default = watch;
 
 var _queueState = __webpack_require__(0);
 
-var _queueState2 = _interopRequireDefault(_queueState);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
 function watch(reactComponent, model, callback) {
   if (model) {
-    if (!model.watch) {
-      throw new Error('react-ringa watch(): the provided object is not a Ringa Model \'' + model + '\'');
-    }
-
-    model.watch(function (path) {
-      var fu = void 0;
-
-      if (callback) {
-        fu = callback.apply(undefined, [path]);
+    (function () {
+      if (!model.watch) {
+        throw new Error('react-ringa watch(): the provided object is not a Ringa Model \'' + model + '\'');
       }
 
-      if (fu === undefined) {
-        var _o = {};
-        _o[model.name] = model;
-        (0, _queueState2.default)(reactComponent, _o);
-      }
-    });
+      var _componentWillUnmount = reactComponent.componentWillUnmount ? reactComponent.componentWillUnmount.bind(reactComponent) : undefined;
 
-    // Initial setup
-    var o = {};
-    o[model.name] = model;
+      reactComponent.componentWillUnmount = function () {
+        (0, _queueState.unqueueState)(reactComponent);
 
-    (0, _queueState2.default)(reactComponent, o);
+        if (_componentWillUnmount) {
+          _componentWillUnmount();
+        }
+      };
+      model.watch(function (path) {
+        var fu = void 0;
+
+        if (callback) {
+          fu = callback.apply(undefined, [path]);
+        }
+
+        if (fu === undefined) {
+          var _o = {};
+          _o[model.name] = model;
+          (0, _queueState.queueState)(reactComponent, _o);
+        }
+      });
+
+      // Initial setup
+      var o = {};
+      o[model.name] = model;
+
+      (0, _queueState.queueState)(reactComponent, o);
+    })();
   }
 }
 

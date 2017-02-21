@@ -1,4 +1,4 @@
-import queueState from './queueState';
+import {queueState, unqueueState} from './queueState';
 
 export default function watch(reactComponent, model, callback) {
   if (model) {
@@ -6,6 +6,15 @@ export default function watch(reactComponent, model, callback) {
       throw new Error(`react-ringa watch(): the provided object is not a Ringa Model '${model}'`);
     }
 
+    let _componentWillUnmount = reactComponent.componentWillUnmount ? reactComponent.componentWillUnmount.bind(reactComponent) : undefined;
+
+    reactComponent.componentWillUnmount = () => {
+      unqueueState(reactComponent);
+
+      if (_componentWillUnmount) {
+        _componentWillUnmount();
+      }
+    };
     model.watch((path) => {
       let fu;
 

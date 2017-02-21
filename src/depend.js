@@ -1,4 +1,4 @@
-import queueState from './queueState';
+import {queueState, unqueueState} from './queueState';
 
 /**
  * Walks the React Components up through the parent heirarchy.
@@ -29,7 +29,7 @@ export function walkReactParents(component, callback) {
     }
   }
 
-  ancestors.forEach(callback)
+  ancestors.forEach(callback);
 
   return ancestors;
 };
@@ -123,18 +123,40 @@ export function getAllListeningControllers(component) {
  * @returns {Array}
  */
 export function depend(component, watches, handler = undefined) {
-  let _componentWillMount;
+  let _componentWillMount, _componentWillUnmount;
 
   if (component.componentWillMount) {
     _componentWillMount = component.componentWillMount.bind(component);
+  }
+
+  if (component.componentWillUnmount) {
+    _componentWillUnmount = component.componentWillUnmount.bind(component);
   }
 
   if (component.state === undefined) {
     component.state = {};
   }
 
+  let controllers;
+  let mws = [];
+
+  component.componentWillUnmount = () => {
+    unqueueState(component);
+
+    /**
+     * When the component unmounts we want to unwatch everything.
+     */
+    mws.forEach(mwGroup => {
+      mwGroup.mw.unwatch(mwGroup.classOrId, mwGroup.propertyPath, mwGroup.changeHandler);
+    });
+
+    if (_componentWillUnmount) {
+      _componentWillUnmount();
+    }
+  };
+
   component.componentWillMount = () => {
-    let controllers = getAllListeningControllers(component);
+    controllers = getAllListeningControllers(component);
 
     if (!controllers.length) {
       console.error(`react-ringa depend(): could not find any Ringa Controllers in the ancestors of ${component.constructor.name}, the following dependencies will NOT work: `, watches, component);
@@ -177,39 +199,46 @@ export function depend(component, watches, handler = undefined) {
 
             let pp = watch.propertyPath instanceof Array ? watch.propertyPath : [watch.propertyPath];
 
+            // Create Change Handler. Note we do not use an arrow function here to save memory.
+            changeHandler = function (watch, changes) {
+              let skipUpdate = handler ? handler(changes) : undefined;
+
+              if (skipUpdate === undefined && watch.setOnState) {
+                let newState = {};
+
+                changes.forEach(change => {
+                  let state = {};
+                let prop = change.model.name;
+
+                if (watch.setProperty) {
+                  prop = watch.setProperty; // Can specify a custom property in the dependency to set on the state for each change.
+                } if (change.watchedPath) {
+                  try {
+                    let s = change.watchedPath.split('.');
+                    prop = s[s.length - 1];
+                  } catch (error) {
+                    console.error(`depend(): property was updated but watched path was invalid. watchedPath was:`, change.watchedPath);
+                  }
+                }
+
+                state[prop] = change.watchedValue;
+
+                newState = Object.assign(newState, state);
+              });
+
+                queueState(component, newState);
+              }
+            }.bind(undefined, watch);
+
             pp.forEach(propertyPath => {
               value = mw.find(watch.classOrId, propertyPath);
 
-              // Create Change Handler. Note we do not use an arrow function here to save memory.
-              changeHandler = function (watch, changes) {
-                let skipUpdate = handler ? handler(changes) : undefined;
-
-                if (skipUpdate === undefined && watch.setOnState) {
-                  let newState = {};
-
-                  changes.forEach(change => {
-                    let state = {};
-                    let prop = change.model.name;
-
-                    if (watch.setProperty) {
-                      prop = watch.setProperty; // Can specify a custom property in the dependency to set on the state for each change.
-                    } if (change.watchedPath) {
-                      try {
-                        let s = change.watchedPath.split('.');
-                        prop = s[s.length - 1];
-                      } catch (error) {
-                        console.error(`depend(): property was updated but watched path was invalid. watchedPath was:`, change.watchedPath);
-                      }
-                    }
-
-                    state[prop] = change.watchedValue;
-
-                    newState = Object.assign(newState, state);
-                  });
-
-                  queueState(component, newState);
-                }
-              }.bind(undefined, watch);
+              mws.push({
+                mw,
+                classOrId: watch.classOrId,
+                propertyPath,
+                changeHandler
+              });
 
               mw.watch(watch.classOrId, propertyPath, changeHandler);
 

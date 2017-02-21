@@ -1,4 +1,11 @@
-export default function queueState(reactComponent, newState) {
+export function unqueueState(reactComponent) {
+  if (reactComponent.__ringaStateQueueTimeout) {
+    clearTimeout(reactComponent.__ringaStateQueueTimeout);
+    delete reactComponent.__ringaStateQueueTimeout;
+  }
+}
+
+export function queueState(reactComponent, newState) {
   if (!reactComponent.state) {
     reactComponent.state = newState;
     return;
