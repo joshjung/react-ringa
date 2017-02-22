@@ -73,11 +73,133 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "/";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 4);
+/******/ 	return __webpack_require__(__webpack_require__.s = 5);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.domNodeToNearestReactComponent = domNodeToNearestReactComponent;
+exports.domNodeToNearestReactComponentDomNode = domNodeToNearestReactComponentDomNode;
+exports.walkReactParents = walkReactParents;
+exports.getAllReactComponentAncestors = getAllReactComponentAncestors;
+exports.getAllListeningControllers = getAllListeningControllers;
+/**
+ * Walks the dom ancestors until it finds the nearest dom node that has a ref to a React Component and then
+ * returns that React Component.
+ *
+ * @param domNode The DOM node to start with.
+ * @returns {*}
+ */
+function domNodeToNearestReactComponent(domNode) {
+  while (domNode) {
+    for (var key in domNode) {
+      if (key.startsWith('__reactInternalInstance$')) {
+        return domNode[key]._currentElement._owner._instance;
+      }
+    }
+
+    domNode = domNode.parentNode;
+  }
+
+  return null;
+}
+
+/**
+ * Walks the dom ancestors until it finds the nearest dom node that has a ref to a React Component and then returns
+ * that dom node.
+ *
+ * @param domNode The DOM node to start with.
+ * @returns {*}
+ */
+function domNodeToNearestReactComponentDomNode(domNode) {
+  while (domNode) {
+    for (var key in domNode) {
+      if (key.startsWith('__reactInternalInstance$')) {
+        return domNode;
+      }
+    }
+
+    domNode = domNode.parentNode;
+  }
+
+  return null;
+}
+
+/**
+ * Walks the React Components up through the parent heirarchy.
+ *
+ * @param component A React Component instance.
+ * @param callback A callback to call for each component in the ancestors.
+ */
+function walkReactParents(component, callback) {
+  var ancestors = [];
+
+  if (component._reactInternalInstance) {
+    ancestors.push(component);
+
+    component = component._reactInternalInstance;
+  }
+
+  while (component) {
+    ancestors.push(component);
+
+    if (component._reactInternalInstance) {
+      component = component._reactInternalInstance;
+    }
+
+    try {
+      component = component._currentElement._owner._instance;
+    } catch (e) {
+      component = null;
+    }
+  }
+
+  if (callback) {
+    ancestors.forEach(callback);
+  }
+
+  return ancestors;
+};
+
+/**
+ * Returns all Ringa.Controller instances that exist in the ancestor tree.
+ *
+ * @param component A React Component instance.
+ * @returns {Array}
+ */
+function getAllReactComponentAncestors(component) {
+  return walkReactParents(component);
+}
+
+/**
+ * Returns all Ringa.Controller instances that will hear when you dispatch an event from any of the provided React component's
+ * DOM nodes or its descendants.
+ *
+ * @param component A React Component instance.
+ * @returns {Array}
+ */
+function getAllListeningControllers(component) {
+  var controllers = [];
+
+  walkReactParents(component, function (c) {
+    if (c.$ringaControllers && c.$ringaControllers.length) {
+      controllers = controllers.concat(c.$ringaControllers);
+    }
+  });
+
+  return controllers;
+}
+
+/***/ }),
+/* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -118,7 +240,7 @@ function queueState(reactComponent, newState) {
 }
 
 /***/ }),
-/* 1 */
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -141,7 +263,7 @@ exports.default = attach;
 function attach(component, controller) {
   var _ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
       _ref$refName = _ref.refName,
-      refName = _ref$refName === undefined ? 'ringaComponent' : _ref$refName,
+      refName = _ref$refName === undefined ? 'ringaRoot' : _ref$refName,
       _ref$callback = _ref.callback,
       callback = _ref$callback === undefined ? undefined : _ref$callback;
 
@@ -161,7 +283,12 @@ function attach(component, controller) {
       return;
     }
 
-    controller.bus = component.refs[refName];
+    var domNode = component.refs[refName];
+
+    domNode.$ringaControllers = domNode.$ringaControllers || [];
+    domNode.$ringaControllers.push(controller);
+
+    controller.bus = domNode;
 
     if (_componentDidMount) {
       _componentDidMount();
@@ -174,7 +301,7 @@ function attach(component, controller) {
 }
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -186,47 +313,13 @@ Object.defineProperty(exports, "__esModule", {
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-exports.walkReactParents = walkReactParents;
 exports.dependency = dependency;
 exports.find = find;
-exports.getAllListeningControllers = getAllListeningControllers;
 exports.depend = depend;
 
-var _queueState = __webpack_require__(0);
+var _queueState = __webpack_require__(1);
 
-/**
- * Walks the React Components up through the parent heirarchy.
- *
- * @param component A React Component instance.
- * @param callback A callback to call for each component in the ancestors.
- */
-function walkReactParents(component, callback) {
-  var ancestors = [];
-
-  if (component._reactInternalInstance) {
-    ancestors.push(component);
-
-    component = component._reactInternalInstance;
-  }
-
-  while (component) {
-    ancestors.push(component);
-
-    if (component._reactInternalInstance) {
-      component = component._reactInternalInstance;
-    }
-
-    try {
-      component = component._currentElement._owner._instance;
-    } catch (e) {
-      component = null;
-    }
-  }
-
-  ancestors.forEach(callback);
-
-  return ancestors;
-};
+var _util = __webpack_require__(0);
 
 /**
  * Builds a dependency object for use with the depend function.
@@ -261,7 +354,7 @@ function dependency(classOrId) {
 function find(reactComponent, classOrId) {
   var propertyPath = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : undefined;
 
-  var controllers = getAllListeningControllers(reactComponent);
+  var controllers = (0, _util.getAllListeningControllers)(reactComponent);
   var value = void 0;
 
   for (var i = 0; i < controllers.length; i++) {
@@ -278,25 +371,6 @@ function find(reactComponent, classOrId) {
   }
 
   return null;
-}
-
-/**
- * Returns all Ringa.Controller instances that will hear when you dispatch an event from any of the provided React component's
- * DOM nodes or its descendants.
- *
- * @param component A React Component instance.
- * @returns {Array}
- */
-function getAllListeningControllers(component) {
-  var controllers = [];
-
-  walkReactParents(component, function (c) {
-    if (c.$ringaControllers && c.$ringaControllers.length) {
-      controllers = controllers.concat(c.$ringaControllers);
-    }
-  });
-
-  return controllers;
 }
 
 /**
@@ -359,7 +433,7 @@ function depend(component, watches) {
   };
 
   component.componentWillMount = function () {
-    controllers = getAllListeningControllers(component);
+    controllers = (0, _util.getAllListeningControllers)(component);
 
     if (!controllers.length) {
       console.error('react-ringa depend(): could not find any Ringa Controllers in the ancestors of ' + component.constructor.name + ', the following dependencies will NOT work: ', watches, component);
@@ -479,7 +553,7 @@ function depend(component, watches) {
 }
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -490,7 +564,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = watch;
 
-var _queueState = __webpack_require__(0);
+var _queueState = __webpack_require__(1);
 
 function watch(reactComponent, model, callback) {
   if (model) {
@@ -537,7 +611,7 @@ function watch(reactComponent, model, callback) {
 }
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -546,34 +620,38 @@ function watch(reactComponent, model, callback) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.watch = exports.getAllListeningControllers = exports.find = exports.walkReactParents = exports.dependency = exports.depend = exports.attach = undefined;
+exports.domNodeToNearestReactComponentDomNode = exports.domNodeToNearestReactComponent = exports.watch = exports.getAllListeningControllers = exports.find = exports.walkReactParents = exports.dependency = exports.depend = exports.attach = undefined;
 
-var _attach = __webpack_require__(1);
+var _attach = __webpack_require__(2);
 
 var _attach2 = _interopRequireDefault(_attach);
 
-var _watch = __webpack_require__(3);
+var _watch = __webpack_require__(4);
 
 var _watch2 = _interopRequireDefault(_watch);
 
-var _depend = __webpack_require__(2);
+var _depend = __webpack_require__(3);
+
+var _util = __webpack_require__(0);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 exports.attach = _attach2.default;
 exports.depend = _depend.depend;
 exports.dependency = _depend.dependency;
-exports.walkReactParents = _depend.walkReactParents;
+exports.walkReactParents = _util.walkReactParents;
 exports.find = _depend.find;
-exports.getAllListeningControllers = _depend.getAllListeningControllers;
+exports.getAllListeningControllers = _util.getAllListeningControllers;
 exports.watch = _watch2.default;
+exports.domNodeToNearestReactComponent = _util.domNodeToNearestReactComponent;
+exports.domNodeToNearestReactComponentDomNode = _util.domNodeToNearestReactComponentDomNode;
 exports.default = {
   attach: _attach2.default,
   depend: _depend.depend,
   dependency: _depend.dependency,
-  walkReactParents: _depend.walkReactParents,
+  walkReactParents: _util.walkReactParents,
   find: _depend.find,
-  getAllListeningControllers: _depend.getAllListeningControllers,
+  getAllListeningControllers: _util.getAllListeningControllers,
   watch: _watch2.default
 };
 

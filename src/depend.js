@@ -1,38 +1,5 @@
 import {queueState, unqueueState} from './queueState';
-
-/**
- * Walks the React Components up through the parent heirarchy.
- *
- * @param component A React Component instance.
- * @param callback A callback to call for each component in the ancestors.
- */
-export function walkReactParents(component, callback) {
-  let ancestors = [];
-
-  if (component._reactInternalInstance) {
-    ancestors.push(component);
-
-    component = component._reactInternalInstance;
-  }
-
-  while (component) {
-    ancestors.push(component);
-
-    if (component._reactInternalInstance) {
-      component = component._reactInternalInstance;
-    }
-
-    try {
-      component = component._currentElement._owner._instance;
-    } catch (e) {
-      component = null;
-    }
-  }
-
-  ancestors.forEach(callback);
-
-  return ancestors;
-};
+import {getAllListeningControllers} from './util';
 
 /**
  * Builds a dependency object for use with the depend function.
@@ -78,25 +45,6 @@ export function find(reactComponent, classOrId, propertyPath = undefined) {
   }
 
   return null;
-}
-
-/**
- * Returns all Ringa.Controller instances that will hear when you dispatch an event from any of the provided React component's
- * DOM nodes or its descendants.
- *
- * @param component A React Component instance.
- * @returns {Array}
- */
-export function getAllListeningControllers(component) {
-  let controllers = [];
-
-  walkReactParents(component, c => {
-    if (c.$ringaControllers && c.$ringaControllers.length) {
-      controllers = controllers.concat(c.$ringaControllers);
-    }
-  });
-
-  return controllers;
 }
 
 /**

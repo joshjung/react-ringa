@@ -8,7 +8,7 @@
  * @param refName The React component reference name.
  * @param callback The function to call whenever the controller has been attached.
  */
-export default function attach(component, controller, { refName = 'ringaComponent', callback = undefined } = {}) {
+export default function attach(component, controller, { refName = 'ringaRoot', callback = undefined } = {}) {
   let _componentDidMount;
 
   if (component.componentDidMount) {
@@ -25,7 +25,12 @@ export default function attach(component, controller, { refName = 'ringaComponen
       return;
     }
 
-    controller.bus = component.refs[refName];
+    let domNode = component.refs[refName];
+
+    domNode.$ringaControllers = domNode.$ringaControllers || [];
+    domNode.$ringaControllers.push(controller);
+
+    controller.bus = domNode;
 
     if (_componentDidMount) {
       _componentDidMount();

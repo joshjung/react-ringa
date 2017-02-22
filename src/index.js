@@ -1,8 +1,17 @@
 import attach from './attach';
 import watch from './watch';
-import {depend, dependency, walkReactParents, find, getAllListeningControllers} from './depend';
+import {depend, dependency, find} from './depend';
+import {walkReactParents, getAllListeningControllers, domNodeToNearestReactComponent, domNodeToNearestReactComponentDomNode} from './util';
 
-export {attach, depend, dependency, walkReactParents, find, getAllListeningControllers, watch};
+export {attach,
+  depend,
+  dependency,
+  walkReactParents,
+  find,
+  getAllListeningControllers,
+  watch,
+  domNodeToNearestReactComponent,
+  domNodeToNearestReactComponentDomNode};
 
 export default {
   attach,
