@@ -2,7 +2,7 @@
 
 Ringa plugin for React JS. See [ringa]() for description of this highly customizable new async and state management platform for Javascript!
 
-Provides a high-performance and customizable binding engine between your Ringa models and React components.
+Provides a high-performance and customizable binding engine between your Ringa models and controllers and React components.
 
 # live demo!
 
