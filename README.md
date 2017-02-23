@@ -4,7 +4,7 @@ Ringa plugin for React JS. See [ringa]() for description of this highly customiz
 
 Provides a high-performance and customizable binding engine between your Ringa models and React components.
 
-# Live Demo!
+# live demo!
 
 [A live demo of the features of Ringa combined with ReactJs here](http://demo.ringajs.com)
 
@@ -12,9 +12,9 @@ Provides a high-performance and customizable binding engine between your Ringa m
 
 React Ringa is a set of tools used to easily hook your ReactJS application into Ringa lifecycle. Tools include:
 
-* attach(): hook up React Components to Ringa Controllers
-* depend(): inject models and properties into your React Component state, automatically.
-* find(): find Ringa Models easily by name, id, or Class
+* `attach()`: hook up React Components to Ringa Controllers
+* `depend()`: inject models and properties into your React Component state, automatically.
+* `find()`: find Ringa Models easily by name, id, or Class
 
 And a suite of other utilities to make debugging easy.
 
