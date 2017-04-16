@@ -70,7 +70,7 @@ export function find(reactComponent, classOrId, propertyPath = undefined) {
  *
  * @returns {Array}
  */
-export function depend(component, watches, handler = undefined) {
+export function depend(component, watches, handler = undefined, debug = false) {
   let _componentWillMount, _componentWillUnmount;
 
   if (component.componentWillMount) {
@@ -110,6 +110,10 @@ export function depend(component, watches, handler = undefined) {
       console.error(`react-ringa depend(): could not find any Ringa Controllers in the ancestors of ${component.constructor.name}, the following dependencies will NOT work: `, watches, component);
 
       return;
+    }
+
+    if (__DEV__ && debug) {
+      console.log(`depend(${component}, ${watches}) found controllers:`, controllers);
     }
 
     watches = watches instanceof Array ? watches : [watches];

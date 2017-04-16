@@ -1,3 +1,5 @@
+import ReactDOM from 'react-dom';
+
 /**
  * Walks the dom ancestors until it finds the nearest dom node that has a ref to a React Component and then
  * returns that React Component.
@@ -46,27 +48,44 @@ export function domNodeToNearestReactComponentDomNode(domNode) {
  * @param component A React Component instance.
  * @param callback A callback to call for each component in the ancestors.
  */
+// export function walkReactParents(component, callback) {
+//   let ancestors = [];
+//
+//   if (component._reactInternalInstance) {
+//     ancestors.push(component);
+//
+//     component = component._reactInternalInstance;
+//   }
+//
+//   while (component) {
+//     ancestors.push(component);
+//
+//     if (component._reactInternalInstance) {
+//       component = component._reactInternalInstance;
+//     }
+//
+//     try {
+//       component = component._currentElement._owner._instance;
+//     } catch (e) {
+//       component = null;
+//     }
+//   }
+//
+//   if (callback) {
+//     ancestors.forEach(callback);
+//   }
+//
+//   return ancestors;
+// };
 export function walkReactParents(component, callback) {
   let ancestors = [];
 
-  if (component._reactInternalInstance) {
-    ancestors.push(component);
-
-    component = component._reactInternalInstance;
-  }
+  component = component._reactInternalInstance;
 
   while (component) {
-    ancestors.push(component);
+    ancestors.push(component._instance || component._currentElement._owner._instance);
 
-    if (component._reactInternalInstance) {
-      component = component._reactInternalInstance;
-    }
-
-    try {
-      component = component._currentElement._owner._instance;
-    } catch (e) {
-      component = null;
-    }
+    component = component._hostParent;
   }
 
   if (callback) {
@@ -103,4 +122,25 @@ export function getAllListeningControllers(component) {
   });
 
   return controllers;
+}
+
+export function findComponentRoot(component, refName) {
+  let domNode;
+
+  // First look for a ref to attach to...
+  if (!component.refs || !component.refs[refName]) {
+    // Second use react-dom to find the root node for the component...
+
+    domNode = ReactDOM.findDOMNode(component);
+
+    if (!domNode) {
+      console.warn(`attach(): Error finding root DOM node for React Component ${component.constructor.name}. Component ref named '${refName}' does not exist and ReactDOM findDomNode(component) did not return anything. This can happen if the render() method returns null or undefined.`);
+    }
+
+    return domNode;
+  } else {
+    domNode = component.refs[refName];
+  }
+
+  return domNode;
 }

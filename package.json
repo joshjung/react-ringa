@@ -11,9 +11,10 @@
     "build": "npm run dist && npm run dev",
     "dist": "webpack --progress --colors --config build/webpack.dist.js",
     "dev": "webpack --progress --colors --config build/webpack.dev.js",
-    "release:major": "npm version major && npm publish && git push --follow-tags",
-    "release:minor": "npm version minor && npm publish && git push --follow-tags",
-    "release:patch": "npm version patch && npm publish && git push --follow-tags"
+    "analyze": "webpack --config build/webpack.dev.js --json | webpack-bundle-size-analyzer",
+    "release:major": "npm test && npm run build && npm version major && npm publish && git push --follow-tags",
+    "release:minor": "npm test && npm run build && npm version minor && npm publish && git push --follow-tags",
+    "release:patch": "npm test && npm run build && npm version patch && npm publish && git push --follow-tags"
   },
   "repository": {
     "type": "git",
@@ -55,7 +56,11 @@
       ]
     }
   ],
-  "dependencies": {},
+  "dependencies": {
+    "babel-preset-stage-0": "^6.24.1",
+    "react-dom": "^15.5.4",
+    "webpack-bundle-size-analyzer": "^2.6.0"
+  },
   "devDependencies": {
     "babel-core": "^6.22.1",
     "babel-loader": "^6.2.10",

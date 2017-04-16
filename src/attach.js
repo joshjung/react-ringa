@@ -1,3 +1,5 @@
+import {findComponentRoot} from './util';
+
 /**
  * This function attaches a Ringa Controller to a specific React.Component and a selected DOM node within that component.
  *
@@ -19,18 +21,16 @@ export default function attach(component, controller, { refName = 'ringaRoot', c
   component.$ringaControllers.push(controller);
 
   component.componentDidMount = () => {
-    if (!component.refs || !component.refs[refName]) {
-      console.warn(`attach(): Error attaching Ringa Controller to React Component ${component.constructor.name}. Component reference named '${refName}' does not exist.`);
+    let domNode = findComponentRoot(component, refName);
 
-      return;
+    if (domNode) {
+      domNode.$ringaControllers = domNode.$ringaControllers || [];
+      domNode.$ringaControllers.push(controller);
+
+      controller.bus = domNode;
+    } else {
+      console.warn(`attach(): could not find domNode to set as bus for controller ${controller}`);
     }
-
-    let domNode = component.refs[refName];
-
-    domNode.$ringaControllers = domNode.$ringaControllers || [];
-    domNode.$ringaControllers.push(controller);
-
-    controller.bus = domNode;
 
     if (_componentDidMount) {
       _componentDidMount();

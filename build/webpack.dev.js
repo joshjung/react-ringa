@@ -2,6 +2,7 @@ const webpack = require('webpack');
 const baseConfig = require('./webpack.base.js');
 const path = require('path');
 const ROOT_PATH = path.resolve(process.env.PWD);
+const WebpackBundleSizeAnalyzerPlugin = require('webpack-bundle-size-analyzer').WebpackBundleSizeAnalyzerPlugin;
 
 module.exports = Object.assign({
   devtool: 'source-map',
@@ -24,6 +25,7 @@ module.exports = Object.assign({
   plugins: [
     new webpack.DefinePlugin({
       __DEV__: true
-    })
+    }),
+    new WebpackBundleSizeAnalyzerPlugin('./dist/reports/webpacksize.txt')
   ]
 }, baseConfig);

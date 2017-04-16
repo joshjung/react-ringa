@@ -1,3 +1,5 @@
+import ReactDOM from 'react-dom';
+
 export function unqueueState(reactComponent) {
   if (reactComponent.__ringaStateQueueTimeout) {
     clearTimeout(reactComponent.__ringaStateQueueTimeout);
@@ -10,6 +12,9 @@ export function unqueueState(reactComponent) {
 export function queueState(reactComponent, newState) {
   if (!reactComponent.state) {
     reactComponent.state = newState;
+    return;
+  } else if (!ReactDOM.findDOMNode(reactComponent)) {
+    reactComponent.state = Object.assign(reactComponent.state, newState);
     return;
   }
 
