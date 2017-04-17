@@ -10,7 +10,7 @@ import {findComponentRoot} from './util';
  * @param refName The React component reference name.
  * @param callback The function to call whenever the controller has been attached.
  */
-export default function attach(component, controller, { refName = 'ringaRoot', callback = undefined } = {}) {
+export default function attach(component, controller, { refName = 'ringaRoot', callback = undefined, bus = undefined } = {}) {
   let _componentDidMount;
 
   if (component.componentDidMount) {
@@ -23,7 +23,9 @@ export default function attach(component, controller, { refName = 'ringaRoot', c
   component.componentDidMount = () => {
     let domNode = findComponentRoot(component, refName);
 
-    if (domNode) {
+    if (bus) {
+      controller.bus = bus;
+    } else if (domNode) {
       domNode.$ringaControllers = domNode.$ringaControllers || [];
       domNode.$ringaControllers.push(controller);
 

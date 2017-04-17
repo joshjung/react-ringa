@@ -13,10 +13,14 @@ export function queueState(reactComponent, newState) {
   if (!reactComponent.state) {
     reactComponent.state = newState;
     return;
-  } else if (!ReactDOM.findDOMNode(reactComponent)) {
-    reactComponent.state = Object.assign(reactComponent.state, newState);
-    return;
   }
+
+  try {
+    if (!ReactDOM.findDOMNode(reactComponent)) {
+      reactComponent.state = Object.assign({}, reactComponent.state, newState);
+      return;
+    }
+  } catch(error) {}
 
   reactComponent.__ringaStateQueue = reactComponent.__ringaStateQueue || {};
   reactComponent.__ringaStateQueue = Object.assign(reactComponent.__ringaStateQueue, newState);

@@ -9694,10 +9694,14 @@ function queueState(reactComponent, newState) {
   if (!reactComponent.state) {
     reactComponent.state = newState;
     return;
-  } else if (!_reactDom2.default.findDOMNode(reactComponent)) {
-    reactComponent.state = Object.assign(reactComponent.state, newState);
-    return;
   }
+
+  try {
+    if (!_reactDom2.default.findDOMNode(reactComponent)) {
+      reactComponent.state = Object.assign({}, reactComponent.state, newState);
+      return;
+    }
+  } catch (error) {}
 
   reactComponent.__ringaStateQueue = reactComponent.__ringaStateQueue || {};
   reactComponent.__ringaStateQueue = Object.assign(reactComponent.__ringaStateQueue, newState);
@@ -9742,7 +9746,9 @@ function attach(component, controller) {
       _ref$refName = _ref.refName,
       refName = _ref$refName === undefined ? 'ringaRoot' : _ref$refName,
       _ref$callback = _ref.callback,
-      callback = _ref$callback === undefined ? undefined : _ref$callback;
+      callback = _ref$callback === undefined ? undefined : _ref$callback,
+      _ref$bus = _ref.bus,
+      bus = _ref$bus === undefined ? undefined : _ref$bus;
 
   var _componentDidMount = void 0;
 
@@ -9756,7 +9762,9 @@ function attach(component, controller) {
   component.componentDidMount = function () {
     var domNode = (0, _util.findComponentRoot)(component, refName);
 
-    if (domNode) {
+    if (bus) {
+      controller.bus = bus;
+    } else if (domNode) {
       domNode.$ringaControllers = domNode.$ringaControllers || [];
       domNode.$ringaControllers.push(controller);
 
@@ -10055,7 +10063,14 @@ function watch(reactComponent, model, callback) {
 
       var _componentWillUnmount = reactComponent.componentWillUnmount ? reactComponent.componentWillUnmount.bind(reactComponent) : undefined;
 
-      var handler = function handler(path) {
+      reactComponent.$watches = reactComponent.$watches || {};
+
+      var curHandler = reactComponent.$watches[model.id];
+      if (curHandler) {
+        model.unwatch(curHandler);
+      }
+
+      var handler = reactComponent.$watches[model.id] = function (path) {
         var fu = void 0;
 
         if (callback) {

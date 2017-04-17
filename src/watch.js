@@ -8,7 +8,14 @@ export default function watch(reactComponent, model, callback) {
 
     let _componentWillUnmount = reactComponent.componentWillUnmount ? reactComponent.componentWillUnmount.bind(reactComponent) : undefined;
 
-    let handler = (path) => {
+    reactComponent.$watches = reactComponent.$watches || {};
+
+    let curHandler = reactComponent.$watches[model.id];
+    if (curHandler) {
+      model.unwatch(curHandler);
+    }
+
+    let handler = reactComponent.$watches[model.id] = (path) => {
       let fu;
 
       if (callback) {
