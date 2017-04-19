@@ -11,10 +11,14 @@ import {findComponentRoot} from './util';
  * @param callback The function to call whenever the controller has been attached.
  */
 export default function attach(component, controller, { refName = 'ringaRoot', callback = undefined, bus = undefined } = {}) {
-  let _componentDidMount;
+  let _componentDidMount, _componentWillUnmount;
 
   if (component.componentDidMount) {
     _componentDidMount = component.componentDidMount.bind(component);
+  }
+
+  if (component.componentWillUnmount) {
+    _componentWillUnmount = component.componentWillUnmount.bind(component);
   }
 
   component.$ringaControllers = component.$ringaControllers || [];
@@ -42,4 +46,22 @@ export default function attach(component, controller, { refName = 'ringaRoot', c
       callback();
     }
   };
+
+  component.componentWillUnmount = () => {
+    let domNode = findComponentRoot(component, refName);
+    let ix;
+
+    if (domNode) {
+      ix = domNode.$ringaControllers.indexOf(controller);
+
+      domNode.$ringaControllers.splice(ix, 1);
+    }
+
+    ix = component.$ringaControllers.indexOf(controller);
+    component.$ringaControllers.splice(ix, 1);
+
+    if (_componentWillUnmount) {
+      _componentWillUnmount();
+    }
+  }
 }

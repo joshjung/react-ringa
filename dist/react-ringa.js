@@ -4655,42 +4655,17 @@ function domNodeToNearestReactComponentDomNode(domNode) {
  * @param component A React Component instance.
  * @param callback A callback to call for each component in the ancestors.
  */
-// export function walkReactParents(component, callback) {
-//   let ancestors = [];
-//
-//   if (component._reactInternalInstance) {
-//     ancestors.push(component);
-//
-//     component = component._reactInternalInstance;
-//   }
-//
-//   while (component) {
-//     ancestors.push(component);
-//
-//     if (component._reactInternalInstance) {
-//       component = component._reactInternalInstance;
-//     }
-//
-//     try {
-//       component = component._currentElement._owner._instance;
-//     } catch (e) {
-//       component = null;
-//     }
-//   }
-//
-//   if (callback) {
-//     ancestors.forEach(callback);
-//   }
-//
-//   return ancestors;
-// };
 function walkReactParents(component, callback) {
   var ancestors = [];
 
   component = component._reactInternalInstance;
 
   while (component) {
-    ancestors.push(component._instance || component._currentElement._owner._instance);
+    var item = component._instance || component._currentElement._owner._instance;
+
+    if (ancestors.indexOf(item) === -1) {
+      ancestors.push(item);
+    }
 
     component = component._hostParent;
   }
@@ -4721,8 +4696,10 @@ function getAllReactComponentAncestors(component) {
  */
 function getAllListeningControllers(component) {
   var controllers = [];
+  var parents = [];
 
   walkReactParents(component, function (c) {
+    parents.push(c);
     if (c.$ringaControllers && c.$ringaControllers.length) {
       controllers = controllers.concat(c.$ringaControllers);
     }
@@ -9750,10 +9727,15 @@ function attach(component, controller) {
       _ref$bus = _ref.bus,
       bus = _ref$bus === undefined ? undefined : _ref$bus;
 
-  var _componentDidMount = void 0;
+  var _componentDidMount = void 0,
+      _componentWillUnmount = void 0;
 
   if (component.componentDidMount) {
     _componentDidMount = component.componentDidMount.bind(component);
+  }
+
+  if (component.componentWillUnmount) {
+    _componentWillUnmount = component.componentWillUnmount.bind(component);
   }
 
   component.$ringaControllers = component.$ringaControllers || [];
@@ -9779,6 +9761,24 @@ function attach(component, controller) {
 
     if (callback) {
       callback();
+    }
+  };
+
+  component.componentWillUnmount = function () {
+    var domNode = (0, _util.findComponentRoot)(component, refName);
+    var ix = void 0;
+
+    if (domNode) {
+      ix = domNode.$ringaControllers.indexOf(controller);
+
+      domNode.$ringaControllers.splice(ix, 1);
+    }
+
+    ix = component.$ringaControllers.indexOf(controller);
+    component.$ringaControllers.splice(ix, 1);
+
+    if (_componentWillUnmount) {
+      _componentWillUnmount();
     }
   };
 }

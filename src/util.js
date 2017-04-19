@@ -48,42 +48,17 @@ export function domNodeToNearestReactComponentDomNode(domNode) {
  * @param component A React Component instance.
  * @param callback A callback to call for each component in the ancestors.
  */
-// export function walkReactParents(component, callback) {
-//   let ancestors = [];
-//
-//   if (component._reactInternalInstance) {
-//     ancestors.push(component);
-//
-//     component = component._reactInternalInstance;
-//   }
-//
-//   while (component) {
-//     ancestors.push(component);
-//
-//     if (component._reactInternalInstance) {
-//       component = component._reactInternalInstance;
-//     }
-//
-//     try {
-//       component = component._currentElement._owner._instance;
-//     } catch (e) {
-//       component = null;
-//     }
-//   }
-//
-//   if (callback) {
-//     ancestors.forEach(callback);
-//   }
-//
-//   return ancestors;
-// };
 export function walkReactParents(component, callback) {
   let ancestors = [];
 
   component = component._reactInternalInstance;
 
   while (component) {
-    ancestors.push(component._instance || component._currentElement._owner._instance);
+    let item = component._instance || component._currentElement._owner._instance;
+
+    if (ancestors.indexOf(item) === -1) {
+      ancestors.push(item);
+    }
 
     component = component._hostParent;
   }
@@ -114,8 +89,10 @@ export function getAllReactComponentAncestors(component) {
  */
 export function getAllListeningControllers(component) {
   let controllers = [];
+  let parents = [];
 
   walkReactParents(component, c => {
+    parents.push(c);
     if (c.$ringaControllers && c.$ringaControllers.length) {
       controllers = controllers.concat(c.$ringaControllers);
     }
