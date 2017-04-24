@@ -9674,8 +9674,8 @@ function queueState(reactComponent, newState) {
   }
 
   try {
-    if (!_reactDom2.default.findDOMNode(reactComponent)) {
-      reactComponent.state = Object.assign({}, reactComponent.state, newState);
+    if (!reactComponent.updater.isMounted(reactComponent)) {
+      reactComponent.state = Object.assign({}, newState, reactComponent.state);
       return;
     }
   } catch (error) {}
@@ -9884,7 +9884,8 @@ function depend(component, watches) {
   var debug = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
 
   var _componentWillMount = void 0,
-      _componentWillUnmount = void 0;
+      _componentWillUnmount = void 0,
+      _componentDidMount = void 0;
 
   if (component.componentWillMount) {
     _componentWillMount = component.componentWillMount.bind(component);
@@ -9951,6 +9952,10 @@ function depend(component, watches) {
 
             if (foundModels.length > 1) {
               console.warn('depend(): found two models while looking for a dependency on \'' + component.constructor.name + '\'! Watch is:\n', watch, 'found these models:\n', foundModels, 'depend() looks for the closest model it can find that matches the watch criteria. This means you might have a serious error in your stack. Proceeding as normal.');
+
+              return {
+                v: void 0
+              };
             }
 
             // By default the model we are requesting automatically gets set on the state no matter what for

@@ -16,8 +16,8 @@ export function queueState(reactComponent, newState) {
   }
 
   try {
-    if (!ReactDOM.findDOMNode(reactComponent)) {
-      reactComponent.state = Object.assign({}, reactComponent.state, newState);
+    if (!reactComponent.updater.isMounted(reactComponent)) {
+      reactComponent.state = Object.assign({}, newState, reactComponent.state);
       return;
     }
   } catch(error) {}

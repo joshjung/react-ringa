@@ -71,7 +71,7 @@ export function find(reactComponent, classOrId, propertyPath = undefined) {
  * @returns {Array}
  */
 export function depend(component, watches, handler = undefined, debug = false) {
-  let _componentWillMount, _componentWillUnmount;
+  let _componentWillMount, _componentWillUnmount, _componentDidMount;
 
   if (component.componentWillMount) {
     _componentWillMount = component.componentWillMount.bind(component);
@@ -135,6 +135,8 @@ export function depend(component, watches, handler = undefined, debug = false) {
 
           if (foundModels.length > 1) {
             console.warn(`depend(): found two models while looking for a dependency on '${component.constructor.name}'! Watch is:\n`, watch, `found these models:\n`, foundModels, `depend() looks for the closest model it can find that matches the watch criteria. This means you might have a serious error in your stack. Proceeding as normal.`);
+
+            return;
           }
 
           // By default the model we are requesting automatically gets set on the state no matter what for
