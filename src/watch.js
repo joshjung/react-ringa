@@ -15,11 +15,11 @@ export default function watch(reactComponent, model, callback) {
       model.unwatch(curHandler);
     }
 
-    let handler = reactComponent.$watches[model.id] = (path) => {
+    let handler = reactComponent.$watches[model.id] = (signal, item, value, descriptor, path) => {
       let fu;
 
       if (callback) {
-        fu = callback.apply(undefined, [path]);
+        fu = callback.apply(undefined, [signal, item, value, descriptor, path]);
       }
 
       if (fu === undefined) {
@@ -29,10 +29,14 @@ export default function watch(reactComponent, model, callback) {
       }
     };
 
-    reactComponent.componentWillUnmount = () => {
+    let unwatch = () => {
       unqueueState(reactComponent);
 
       model.unwatch(handler);
+    };
+
+    reactComponent.componentWillUnmount = () => {
+      unwatch();
 
       if (_componentWillUnmount) {
         _componentWillUnmount();
@@ -46,5 +50,7 @@ export default function watch(reactComponent, model, callback) {
     o[model.name] = model;
 
     queueState(reactComponent, o);
+
+    return unwatch;
   }
 }

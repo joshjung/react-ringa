@@ -9673,12 +9673,10 @@ function queueState(reactComponent, newState) {
     return;
   }
 
-  try {
-    if (!reactComponent.updater.isMounted(reactComponent)) {
-      reactComponent.state = Object.assign({}, newState, reactComponent.state);
-      return;
-    }
-  } catch (error) {}
+  if (!reactComponent.updater.isMounted(reactComponent)) {
+    reactComponent.state = Object.assign(newState, reactComponent.state);
+    return;
+  }
 
   reactComponent.__ringaStateQueue = reactComponent.__ringaStateQueue || {};
   reactComponent.__ringaStateQueue = Object.assign(reactComponent.__ringaStateQueue, newState);
@@ -9983,17 +9981,13 @@ function depend(component, watches) {
 
                     changes.forEach(function (change) {
                       var state = {};
-                      var prop = change.model.name;
+                      var prop = change.watchedModel.name;
 
                       if (watch.setProperty) {
                         prop = watch.setProperty; // Can specify a custom property in the dependency to set on the state for each change.
-                      }if (change.watchedPath) {
-                        try {
-                          var _s = change.watchedPath.split('.');
-                          prop = _s[_s.length - 1];
-                        } catch (error) {
-                          console.error('depend(): property was updated but watched path was invalid. watchedPath was:', change.watchedPath);
-                        }
+                      } else if (change.watchedPath) {
+                        var _s = change.watchedPath.split('.');
+                        prop = _s[_s.length - 1];
                       }
 
                       state[prop] = change.watchedValue;
@@ -10020,8 +10014,8 @@ function depend(component, watches) {
 
                 if (changeHandler) {
                   changeHandler([{
-                    model: model,
-                    value: value,
+                    watchedModel: model,
+                    signalValue: value,
                     watchedPath: propertyPath,
                     watchedValue: value
                   }]);
@@ -10055,13 +10049,16 @@ function depend(component, watches) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 exports.default = watch;
 
 var _queueState = __webpack_require__(82);
 
 function watch(reactComponent, model, callback) {
   if (model) {
-    (function () {
+    var _ret = function () {
       if (!model.watch) {
         throw new Error('react-ringa watch(): the provided object is not a Ringa Model \'' + model + '\'');
       }
@@ -10075,11 +10072,11 @@ function watch(reactComponent, model, callback) {
         model.unwatch(curHandler);
       }
 
-      var handler = reactComponent.$watches[model.id] = function (path) {
+      var handler = reactComponent.$watches[model.id] = function (signal, item, value, descriptor, path) {
         var fu = void 0;
 
         if (callback) {
-          fu = callback.apply(undefined, [path]);
+          fu = callback.apply(undefined, [signal, item, value, descriptor, path]);
         }
 
         if (fu === undefined) {
@@ -10089,10 +10086,14 @@ function watch(reactComponent, model, callback) {
         }
       };
 
-      reactComponent.componentWillUnmount = function () {
+      var unwatch = function unwatch() {
         (0, _queueState.unqueueState)(reactComponent);
 
         model.unwatch(handler);
+      };
+
+      reactComponent.componentWillUnmount = function () {
+        unwatch();
 
         if (_componentWillUnmount) {
           _componentWillUnmount();
@@ -10106,7 +10107,13 @@ function watch(reactComponent, model, callback) {
       o[model.name] = model;
 
       (0, _queueState.queueState)(reactComponent, o);
-    })();
+
+      return {
+        v: unwatch
+      };
+    }();
+
+    if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
   }
 }
 

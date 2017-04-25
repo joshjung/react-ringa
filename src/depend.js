@@ -162,23 +162,19 @@ export function depend(component, watches, handler = undefined, debug = false) {
 
                 changes.forEach(change => {
                   let state = {};
-                let prop = change.model.name;
+                  let prop = change.watchedModel.name;
 
-                if (watch.setProperty) {
-                  prop = watch.setProperty; // Can specify a custom property in the dependency to set on the state for each change.
-                } if (change.watchedPath) {
-                  try {
+                  if (watch.setProperty) {
+                    prop = watch.setProperty; // Can specify a custom property in the dependency to set on the state for each change.
+                  } else if (change.watchedPath) {
                     let s = change.watchedPath.split('.');
                     prop = s[s.length - 1];
-                  } catch (error) {
-                    console.error(`depend(): property was updated but watched path was invalid. watchedPath was:`, change.watchedPath);
                   }
-                }
 
-                state[prop] = change.watchedValue;
+                  state[prop] = change.watchedValue;
 
-                newState = Object.assign(newState, state);
-              });
+                  newState = Object.assign(newState, state);
+                });
 
                 queueState(component, newState);
               }
@@ -198,8 +194,8 @@ export function depend(component, watches, handler = undefined, debug = false) {
 
               if (changeHandler) {
                 changeHandler([{
-                  model,
-                  value,
+                  watchedModel: model,
+                  signalValue: value,
                   watchedPath: propertyPath,
                   watchedValue: value
                 }]);

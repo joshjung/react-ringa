@@ -15,12 +15,10 @@ export function queueState(reactComponent, newState) {
     return;
   }
 
-  try {
-    if (!reactComponent.updater.isMounted(reactComponent)) {
-      reactComponent.state = Object.assign({}, newState, reactComponent.state);
-      return;
-    }
-  } catch(error) {}
+  if (!reactComponent.updater.isMounted(reactComponent)) {
+    reactComponent.state = Object.assign(newState, reactComponent.state);
+    return;
+  }
 
   reactComponent.__ringaStateQueue = reactComponent.__ringaStateQueue || {};
   reactComponent.__ringaStateQueue = Object.assign(reactComponent.__ringaStateQueue, newState);
