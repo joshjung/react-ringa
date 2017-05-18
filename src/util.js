@@ -68,7 +68,7 @@ export function walkReactParents(component, callback) {
   }
 
   return ancestors;
-};
+}
 
 /**
  * Returns all Ringa.Controller instances that exist in the ancestor tree.
