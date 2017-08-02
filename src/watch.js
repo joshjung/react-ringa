@@ -1,6 +1,6 @@
 import {queueState, unqueueState} from './queueState';
 
-export default function watch(reactComponent, model, callback) {
+export default function watch(reactComponent, model, signals = [], callback = undefined) {
   if (model) {
     if (!model.watch) {
       throw new Error(`react-ringa watch(): the provided object is not a Ringa Model '${model}'`);
@@ -17,6 +17,18 @@ export default function watch(reactComponent, model, callback) {
 
     let handler = reactComponent.$watches[model.id] = (signal, item, value, descriptor, path) => {
       let fu;
+      let found = false;
+      signals.forEach(_signal => {
+        let subSignal = _signal.split('*')[0];
+
+        if (signal.startsWith(subSignal)) {
+          found = true;
+        }
+      });
+
+      if (!found) {
+        return;
+      }
 
       if (callback) {
         fu = callback.apply(undefined, [signal, item, value, descriptor, path]);

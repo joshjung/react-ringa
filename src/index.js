@@ -2,7 +2,7 @@ import attach from './attach';
 import watch from './watch';
 
 import {depend, dependency, find} from './depend';
-import {walkReactParents, getAllListeningControllers, domNodeToNearestReactComponent, domNodeToNearestReactComponentDomNode} from './util';
+import {walkReactParents, getAllListeningControllers, domNodeToNearestReactComponent, domNodeToNearestReactComponentDomNode, getAllReactComponentAncestors} from './util';
 
 export {attach,
         depend,
@@ -12,6 +12,7 @@ export {attach,
         getAllListeningControllers,
         watch,
         domNodeToNearestReactComponent,
+        getAllReactComponentAncestors,
         domNodeToNearestReactComponentDomNode};
 
 export default {
@@ -21,5 +22,8 @@ export default {
   walkReactParents,
   find,
   getAllListeningControllers,
-  watch
+  watch,
+  domNodeToNearestReactComponent,
+  getAllReactComponentAncestors,
+  domNodeToNearestReactComponentDomNode
 };
