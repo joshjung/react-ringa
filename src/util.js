@@ -60,7 +60,11 @@ export function walkReactParents(component, callback) {
       ancestors.push(item);
     }
 
-    component = component._hostParent;
+    if (item.$ringaAlternateParentComponent) {
+      component = item.$ringaAlternateParentComponent._reactInternalInstance;
+    } else {
+      component = component._hostParent;
+    }
   }
 
   if (callback) {

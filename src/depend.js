@@ -206,7 +206,11 @@ export function depend(component, watches, handler = undefined, debug = false) {
       });
 
       if (!foundModels.length) {
-        console.error(`depend(): could not find the model`, watch.classOrId.name, `in any ancestor Controllers of React component`, component.constructor.name, component, `during the componentDidMount() phase. Found these instantiated and attached controllers`, controllers);
+        if (!watch.classOrId) {
+          console.error(`depend(): could not the model as it was not specified!`);
+        } else {
+          console.error(`depend(): could not find the model`, watch.classOrId.name, `in any ancestor Controllers of React component`, component.constructor.name, component, `during the componentDidMount() phase. Found these instantiated and attached controllers`, controllers);
+        }
       }
     });
 

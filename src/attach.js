@@ -51,7 +51,7 @@ export default function attach(component, controller, { refName = 'ringaRoot', c
     let domNode = findComponentRoot(component, refName);
     let ix;
 
-    if (domNode) {
+    if (domNode && domNode.$ringaControllers) {
       ix = domNode.$ringaControllers.indexOf(controller);
 
       domNode.$ringaControllers.splice(ix, 1);
