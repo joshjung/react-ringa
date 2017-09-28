@@ -31,7 +31,9 @@ export function queueState(reactComponent, newState) {
     reactComponent.__ringaStateQueueTimeout = 0;
     reactComponent.setState(reactComponent.__ringaStateQueue);
     if (__DEV__) {
-      reactComponent.$ringaTriggerProperties = Object.keys(reactComponent.__ringaStateQueue);
+      try {
+        reactComponent.$ringaTriggerProperties = Object.keys(reactComponent.__ringaStateQueue);
+      } catch (error) { /* TODO this was crashing... sometimes. don't really care about an error for a debugging feature too much. */}
     }
     delete reactComponent.__ringaStateQueue;
   }, 0);
