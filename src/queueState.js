@@ -1,5 +1,3 @@
-import ReactDOM from 'react-dom';
-
 export function unqueueState(reactComponent) {
   if (reactComponent.__ringaStateQueueTimeout) {
     clearTimeout(reactComponent.__ringaStateQueueTimeout);
