@@ -26,7 +26,7 @@ export default function watch(reactComponent, model, signals = [], callback = un
         }
       });
 
-      if (!found && signals.length !== 0) {
+      if (!found && signals.length) {
         return;
       }
 
