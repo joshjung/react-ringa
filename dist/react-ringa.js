@@ -265,9 +265,16 @@ function queueState(reactComponent, newState) {
   }
 
   reactComponent.__ringaStateQueueTimeout = setTimeout(function () {
+    var before = void 0;
+    if (true) {
+      before = new Date().getTime();
+    }
     reactComponent.__ringaStateQueueTimeout = 0;
     reactComponent.setState(reactComponent.__ringaStateQueue);
     if (true) {
+      if (new Date().getTime() - before > 20) {
+        console.warn('react-ringa __DEV__: component update took longer than 20 milliseconds, consider improving the following component:', reactComponent, 'newState being assigned was: ', newState);
+      }
       try {
         reactComponent.$ringaTriggerProperties = Object.keys(reactComponent.__ringaStateQueue);
       } catch (error) {/* TODO this was crashing... sometimes. don't really care about an error for a debugging feature too much. */}
@@ -657,7 +664,7 @@ function watch(reactComponent, model) {
         }
       });
 
-      if (!found && signals.length !== 0) {
+      if (!found && signals.length) {
         return;
       }
 
