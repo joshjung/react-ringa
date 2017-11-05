@@ -1,13 +1,13 @@
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
-		module.exports = factory(require("react-dom"));
+		module.exports = factory(require("react"), require("react-dom"));
 	else if(typeof define === 'function' && define.amd)
-		define(["react-dom"], factory);
+		define(["react", "react-dom"], factory);
 	else if(typeof exports === 'object')
-		exports["React Ringa"] = factory(require("react-dom"));
+		exports["React Ringa"] = factory(require("react"), require("react-dom"));
 	else
-		root["React Ringa"] = factory(root["ReactDOM"]);
-})(this, function(__WEBPACK_EXTERNAL_MODULE_6__) {
+		root["React Ringa"] = factory(root["React"], root["ReactDOM"]);
+})(this, function(__WEBPACK_EXTERNAL_MODULE_6__, __WEBPACK_EXTERNAL_MODULE_7__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -93,9 +93,13 @@ exports.getAllReactComponentAncestors = getAllReactComponentAncestors;
 exports.getAllListeningControllers = getAllListeningControllers;
 exports.findComponentRoot = findComponentRoot;
 
-var _reactDom = __webpack_require__(6);
+var _reactDom = __webpack_require__(7);
 
 var _reactDom2 = _interopRequireDefault(_reactDom);
+
+var _react = __webpack_require__(6);
+
+var _react2 = _interopRequireDefault(_react);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -148,6 +152,43 @@ function domNodeToNearestReactComponentDomNode(domNode) {
  * @param callback A callback to call for each component in the ancestors.
  */
 function walkReactParents(component, callback) {
+  if (component._reactInternalFiber) {
+    return _walkReactParents16(component, callback);
+  } else {
+    return _walkReactParents15(component, callback);
+  }
+}
+
+function _walkReactParents16(component, callback) {
+  var ancestors = [];
+
+  var fiber = component._reactInternalFiber;
+
+  while (fiber) {
+    var item = fiber.stateNode;
+
+    if (item && item instanceof _react2.default.Component) {
+      if (ancestors.indexOf(item) === -1) {
+        ancestors.push(item);
+      }
+    }
+
+    if (item && item.$ringaAlternateParentComponent) {
+      item = item.$ringaAlternateParentComponent._reactInternalInstance;
+      fiber = item._reactInternalFiber;
+    } else {
+      fiber = fiber.return;
+    }
+  }
+
+  if (callback) {
+    ancestors.forEach(callback);
+  }
+
+  return ancestors;
+}
+
+function _walkReactParents15(component, callback) {
   var ancestors = [];
 
   component = component._reactInternalInstance;
@@ -759,6 +800,12 @@ exports.default = {
 /***/ (function(module, exports) {
 
 module.exports = __WEBPACK_EXTERNAL_MODULE_6__;
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports) {
+
+module.exports = __WEBPACK_EXTERNAL_MODULE_7__;
 
 /***/ })
 /******/ ]);

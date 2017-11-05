@@ -1,4 +1,5 @@
 import ReactDOM from 'react-dom';
+import React from 'react';
 
 /**
  * Walks the dom ancestors until it finds the nearest dom node that has a ref to a React Component and then
@@ -49,6 +50,44 @@ export function domNodeToNearestReactComponentDomNode(domNode) {
  * @param callback A callback to call for each component in the ancestors.
  */
 export function walkReactParents(component, callback) {
+  if (component._reactInternalFiber) {
+    return _walkReactParents16(component, callback);
+  } else {
+    return _walkReactParents15(component, callback);
+  }
+}
+
+function _walkReactParents16(component, callback) {
+  let ancestors = [];
+
+  let fiber = component._reactInternalFiber;
+
+  while (fiber) {
+    let item = fiber.stateNode;
+
+    if (item && item instanceof React.Component) {
+      if (ancestors.indexOf(item) === -1) {
+        ancestors.push(item);
+      }
+    }
+
+    if (item && item.$ringaAlternateParentComponent) {
+      item = item.$ringaAlternateParentComponent._reactInternalInstance;
+      fiber = item._reactInternalFiber;
+    } else {
+      fiber = fiber.return;
+    }
+  }
+
+  if (callback) {
+    ancestors.forEach(callback);
+  }
+
+  return ancestors;
+}
+
+
+function _walkReactParents15(component, callback) {
   let ancestors = [];
 
   component = component._reactInternalInstance;
