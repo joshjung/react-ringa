@@ -114,6 +114,21 @@ function domNodeToNearestReactComponent(domNode) {
   while (domNode) {
     for (var key in domNode) {
       if (key.startsWith('__reactInternalInstance$')) {
+        // Please don't judge me when you read this code.
+
+        if (_react2.default.version.startsWith('16')) {
+          // In React Fiber, every node in the tree (including dom nodes) is represented in the Fiber tree. So we
+          // have to search through all the parents to find the first one that has a stateNode that is a React Component
+          var curFiber = domNode[key];
+
+          while (curFiber && !(curFiber.stateNode instanceof _react2.default.Component)) {
+            curFiber = curFiber.return;
+          }
+
+          return curFiber.stateNode;
+        }
+
+        // React 15
         return domNode[key]._currentElement._owner._instance;
       }
     }
@@ -174,10 +189,11 @@ function _walkReactParents16(component, callback) {
     }
 
     if (item && item.$ringaAlternateParentComponent) {
-      item = item.$ringaAlternateParentComponent._reactInternalInstance;
+      item = item.$ringaAlternateParentComponent;
+      ancestors.push(item);
       fiber = item._reactInternalFiber;
     } else {
-      fiber = fiber.return;
+      fiber = fiber.return; // return is the parent node, go figure (ask Facebook)
     }
   }
 
