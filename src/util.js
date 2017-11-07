@@ -13,7 +13,7 @@ export function domNodeToNearestReactComponent(domNode) {
     for (let key in domNode) {
       if (key.startsWith('__reactInternalInstance$')) {
         // Please don't judge me when you read this code.
-        
+
         if (React.version.startsWith('16')) {
           // In React Fiber, every node in the tree (including dom nodes) is represented in the Fiber tree. So we
           // have to search through all the parents to find the first one that has a stateNode that is a React Component

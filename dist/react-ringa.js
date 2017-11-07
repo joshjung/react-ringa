@@ -1,13 +1,13 @@
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
-		module.exports = factory(require("react"), require("react-dom"));
+		module.exports = factory(require("react"), require("react-dom"), require("ringa"));
 	else if(typeof define === 'function' && define.amd)
-		define(["react", "react-dom"], factory);
+		define(["react", "react-dom", "ringa"], factory);
 	else if(typeof exports === 'object')
-		exports["React Ringa"] = factory(require("react"), require("react-dom"));
+		exports["React Ringa"] = factory(require("react"), require("react-dom"), require("ringa"));
 	else
-		root["React Ringa"] = factory(root["React"], root["ReactDOM"]);
-})(this, function(__WEBPACK_EXTERNAL_MODULE_6__, __WEBPACK_EXTERNAL_MODULE_7__) {
+		root["React Ringa"] = factory(root["React"], root["ReactDOM"], root["Ringa"]);
+})(this, function(__WEBPACK_EXTERNAL_MODULE_6__, __WEBPACK_EXTERNAL_MODULE_7__, __WEBPACK_EXTERNAL_MODULE_8__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -354,17 +354,22 @@ exports.default = attach;
 
 var _util = __webpack_require__(0);
 
+var _ringa = __webpack_require__(8);
+
 /**
- * This function attaches a Ringa Controller to a specific React.Component and a selected DOM node within that component.
+ * This function attaches a Ringa Controller or Model to a specific React.Component and a selected DOM node within that component.
  *
  * Note that a Ringa controller is attached to a React Component when componentDidMount is called on the component.
+ *
+ * If you provide a Ringa Model, then a dummy Controller is built and the Model is added to that controller before the Controller is
+ * attached to the view.
  *
  * @param component The React Component to attach to.
  * @param controller The Ringa Controller to attach when a DOM node is available.
  * @param refName The React component reference name.
  * @param callback The function to call whenever the controller has been attached.
  */
-function attach(component, controller) {
+function attach(component, controllerOrModel) {
   var _ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
       _ref$refName = _ref.refName,
       refName = _ref$refName === undefined ? 'ringaRoot' : _ref$refName,
@@ -375,6 +380,15 @@ function attach(component, controller) {
 
   var _componentDidMount = void 0,
       _componentWillUnmount = void 0;
+
+  var controller = void 0;
+
+  if (controllerOrModel instanceof _ringa.Model) {
+    controller = new _ringa.Controller();
+    controller.addModel(controllerOrModel);
+  } else {
+    controller = controllerOrModel;
+  }
 
   if (component.componentDidMount) {
     _componentDidMount = component.componentDidMount.bind(component);
@@ -822,6 +836,12 @@ module.exports = __WEBPACK_EXTERNAL_MODULE_6__;
 /***/ (function(module, exports) {
 
 module.exports = __WEBPACK_EXTERNAL_MODULE_7__;
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports) {
+
+module.exports = __WEBPACK_EXTERNAL_MODULE_8__;
 
 /***/ })
 /******/ ]);

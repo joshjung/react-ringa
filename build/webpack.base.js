@@ -15,5 +15,12 @@ module.exports = {
       amd: 'react-dom',
       umd: 'react-dom',
     },
+    'ringa': {
+      root: 'Ringa',
+      commonjs2: 'ringa',
+      commonjs: 'ringa',
+      amd: 'ringa',
+      umd: 'ringa',
+    },
   }
 };

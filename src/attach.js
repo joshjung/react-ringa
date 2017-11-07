@@ -1,17 +1,30 @@
 import {findComponentRoot} from './util';
+import {Controller, Model} from 'ringa';
 
 /**
- * This function attaches a Ringa Controller to a specific React.Component and a selected DOM node within that component.
+ * This function attaches a Ringa Controller or Model to a specific React.Component and a selected DOM node within that component.
  *
  * Note that a Ringa controller is attached to a React Component when componentDidMount is called on the component.
+ *
+ * If you provide a Ringa Model, then a dummy Controller is built and the Model is added to that controller before the Controller is
+ * attached to the view.
  *
  * @param component The React Component to attach to.
  * @param controller The Ringa Controller to attach when a DOM node is available.
  * @param refName The React component reference name.
  * @param callback The function to call whenever the controller has been attached.
  */
-export default function attach(component, controller, { refName = 'ringaRoot', callback = undefined, bus = undefined } = {}) {
+export default function attach(component, controllerOrModel, { refName = 'ringaRoot', callback = undefined, bus = undefined } = {}) {
   let _componentDidMount, _componentWillUnmount;
+
+  let controller;
+
+  if (controllerOrModel instanceof Model) {
+    controller = new Controller();
+    controller.addModel(controllerOrModel);
+  } else {
+    controller = controllerOrModel;
+  }
 
   if (component.componentDidMount) {
     _componentDidMount = component.componentDidMount.bind(component);
