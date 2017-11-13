@@ -10,12 +10,13 @@ import {getAllListeningControllers} from './util';
  *
  * @returns {{classOrId: *, propertyPath: *, setOnState: boolean}}
  */
-export function dependency(classOrId, propertyPath = undefined, setOnState = true, setOnComponent = false) {
+export function dependency(classOrId, propertyPaths = undefined, {setOnState = true, setStateAs = undefined, setOnComponent = false} = {setOnState: true, setOnComponent: false, setStateAs: undefined}) {
   return {
     classOrId,
-    propertyPath,
+    propertyPaths,
     setOnState,
-    setOnComponent
+    setOnComponent,
+    setStateAs
   };
 }
 
@@ -133,8 +134,8 @@ export function depend(component, watches, handler = undefined, debug = false) {
 
           foundModels.push(model);
 
-          if (foundModels.length > 1) {
-            console.warn(`depend(): found two models while looking for a dependency on '${component.constructor.name}'! Watch is:\n`, watch, `found these models:\n`, foundModels, `depend() looks for the closest model it can find that matches the watch criteria. This means you might have a serious error in your stack. Proceeding as normal.`);
+          if (__DEV__ && foundModels.length > 1) {
+            console.warn(`depend(): found two models while looking for a dependency on the '${component.constructor.name}' component! Watch is:\n`, watch, `\nFound these conflicting models during the search, all of which match:\n`, foundModels, `\ndepend() looks for the closest model in the DOM tree ancestors it can find that matches the watch criteria. This means you might have a problem in your stack. Proceeding normally with the first model in the list above. This might NOT be the right model and could cause errors. This error will not appear in production.`);
 
             return;
           }
@@ -143,15 +144,15 @@ export function depend(component, watches, handler = undefined, debug = false) {
           // easy access. However, we don't watch the entire model because that would be silliness. Each view
           // component should request the specific signals it wants to watch.
           let s = {};
-          s[watch.setProperty || model.name] = model;
+          s[watch.setStateAs || model.name] = model;
           queueState(component, s);
 
           let value, changeHandler;
 
           // If the user is just asking for the model (no propertyPath), we can skip all the watching jargon.
-          if (watch.propertyPath) {
+          if (watch.propertyPaths) {
 
-            let pp = watch.propertyPath instanceof Array ? watch.propertyPath : [watch.propertyPath];
+            let pp = watch.propertyPaths instanceof Array ? watch.propertyPaths : [watch.propertyPaths];
 
             // Create Change Handler. Note we do not use an arrow function here to save memory.
             changeHandler = function (watch, changes) {
@@ -164,11 +165,10 @@ export function depend(component, watches, handler = undefined, debug = false) {
                   let state = {};
                   let prop = change.watchedModel.name;
 
-                  if (watch.setProperty) {
-                    prop = watch.setProperty; // Can specify a custom property in the dependency to set on the state for each change.
-                  } else if (change.watchedPath) {
-                    let s = change.watchedPath.split('.');
-                    prop = s[s.length - 1];
+                  if (change.propertyObj && change.propertyObj.setStateAs) {
+                    prop = change.propertyObj.setStateAs;
+                  } if (change.watchedPath) {
+                    prop = change.watchedPath.split('.').pop();
                   }
 
                   state[prop] = change.watchedValue;
@@ -181,12 +181,20 @@ export function depend(component, watches, handler = undefined, debug = false) {
             }.bind(undefined, watch);
 
             pp.forEach(propertyPath => {
+              let propertyPathObj;
+
+              if (typeof propertyPath === 'object') {
+                propertyPathObj = propertyPath;;
+                propertyPath = propertyPathObj.propertyPath;
+              }
+
               value = mw.find(watch.classOrId, propertyPath);
 
               mws.push({
                 mw,
                 classOrId: watch.classOrId,
                 propertyPath,
+                propertyPathObj,
                 changeHandler
               });
 
@@ -197,7 +205,8 @@ export function depend(component, watches, handler = undefined, debug = false) {
                   watchedModel: model,
                   signalValue: value,
                   watchedPath: propertyPath,
-                  watchedValue: value
+                  watchedValue: value,
+                  propertyPathObj
                 }]);
               }
             });
