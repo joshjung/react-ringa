@@ -44,9 +44,9 @@
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/jung-digital/react-ringa/issues"
+    "url": "https://github.com/ringa-js/react-ringa/issues"
   },
-  "homepage": "https://github.com/jung-digital/react-ringa#readme",
+  "homepage": "https://github.com/ringa-js/react-ringa#readme",
   "npmName": "react-ringa",
   "npmFileMap": [
     {
@@ -70,7 +70,7 @@
     "jest": "^18.1.0",
     "react": "15.5.4",
     "react-test-renderer": "15.4.2",
-    "ringa": "^0.1.17",
+    "ringa": "^0.1.18",
     "webpack": "^2.2.0",
     "webpack-bundle-size-analyzer": "^2.6.0"
   }
