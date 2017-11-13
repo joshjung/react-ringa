@@ -453,6 +453,9 @@ function attach(component, controllerOrModel) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 exports.dependency = dependency;
 exports.find = find;
 exports.depend = depend;
@@ -471,15 +474,22 @@ var _util = __webpack_require__(0);
  * @returns {{classOrId: *, propertyPath: *, setOnState: boolean}}
  */
 function dependency(classOrId) {
-  var propertyPath = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : undefined;
-  var setOnState = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
-  var setOnComponent = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
+  var propertyPaths = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : undefined;
+
+  var _ref = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : { setOnState: true, setOnComponent: false, setStateAs: undefined },
+      _ref$setOnState = _ref.setOnState,
+      setOnState = _ref$setOnState === undefined ? true : _ref$setOnState,
+      _ref$setStateAs = _ref.setStateAs,
+      setStateAs = _ref$setStateAs === undefined ? undefined : _ref$setStateAs,
+      _ref$setOnComponent = _ref.setOnComponent,
+      setOnComponent = _ref$setOnComponent === undefined ? false : _ref$setOnComponent;
 
   return {
     classOrId: classOrId,
-    propertyPath: propertyPath,
+    propertyPaths: propertyPaths,
     setOnState: setOnState,
-    setOnComponent: setOnComponent
+    setOnComponent: setOnComponent,
+    setStateAs: setStateAs
   };
 }
 
@@ -604,8 +614,8 @@ function depend(component, watches) {
 
           foundModels.push(model);
 
-          if (foundModels.length > 1) {
-            console.warn('depend(): found two models while looking for a dependency on \'' + component.constructor.name + '\'! Watch is:\n', watch, 'found these models:\n', foundModels, 'depend() looks for the closest model it can find that matches the watch criteria. This means you might have a serious error in your stack. Proceeding as normal.');
+          if (true && foundModels.length > 1) {
+            console.warn('depend(): found two models while looking for a dependency on the \'' + component.constructor.name + '\' component! Watch is:\n', watch, '\nFound these conflicting models during the search, all of which match:\n', foundModels, '\ndepend() looks for the closest model in the DOM tree ancestors it can find that matches the watch criteria. This means you might have a problem in your stack. Proceeding normally with the first model in the list above. This might NOT be the right model and could cause errors. This error will not appear in production.');
 
             return;
           }
@@ -614,16 +624,16 @@ function depend(component, watches) {
           // easy access. However, we don't watch the entire model because that would be silliness. Each view
           // component should request the specific signals it wants to watch.
           var s = {};
-          s[watch.setProperty || model.name] = model;
+          s[watch.setStateAs || model.name] = model;
           (0, _queueState.queueState)(component, s);
 
           var value = void 0,
               changeHandler = void 0;
 
           // If the user is just asking for the model (no propertyPath), we can skip all the watching jargon.
-          if (watch.propertyPath) {
+          if (watch.propertyPaths) {
 
-            var pp = watch.propertyPath instanceof Array ? watch.propertyPath : [watch.propertyPath];
+            var pp = watch.propertyPaths instanceof Array ? watch.propertyPaths : [watch.propertyPaths];
 
             // Create Change Handler. Note we do not use an arrow function here to save memory.
             changeHandler = function (watch, changes) {
@@ -636,11 +646,10 @@ function depend(component, watches) {
                   var state = {};
                   var prop = change.watchedModel.name;
 
-                  if (watch.setProperty) {
-                    prop = watch.setProperty; // Can specify a custom property in the dependency to set on the state for each change.
-                  } else if (change.watchedPath) {
-                    var _s = change.watchedPath.split('.');
-                    prop = _s[_s.length - 1];
+                  if (change.propertyObj && change.propertyObj.setStateAs) {
+                    prop = change.propertyObj.setStateAs;
+                  }if (change.watchedPath) {
+                    prop = change.watchedPath.split('.').pop();
                   }
 
                   state[prop] = change.watchedValue;
@@ -653,12 +662,20 @@ function depend(component, watches) {
             }.bind(undefined, watch);
 
             pp.forEach(function (propertyPath) {
+              var propertyPathObj = void 0;
+
+              if ((typeof propertyPath === 'undefined' ? 'undefined' : _typeof(propertyPath)) === 'object') {
+                propertyPathObj = propertyPath;;
+                propertyPath = propertyPathObj.propertyPath;
+              }
+
               value = mw.find(watch.classOrId, propertyPath);
 
               mws.push({
                 mw: mw,
                 classOrId: watch.classOrId,
                 propertyPath: propertyPath,
+                propertyPathObj: propertyPathObj,
                 changeHandler: changeHandler
               });
 
@@ -669,7 +686,8 @@ function depend(component, watches) {
                   watchedModel: model,
                   signalValue: value,
                   watchedPath: propertyPath,
-                  watchedValue: value
+                  watchedValue: value,
+                  propertyPathObj: propertyPathObj
                 }]);
               }
             });
