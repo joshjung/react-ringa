@@ -310,7 +310,7 @@ function queueState(reactComponent, newState) {
   }
 
   if (!reactComponent.updater.isMounted(reactComponent)) {
-    reactComponent.state = Object.assign(newState, reactComponent.state);
+    reactComponent.setState(Object.assign(newState, reactComponent.state));
     return;
   }
 
