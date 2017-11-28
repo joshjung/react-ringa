@@ -14,7 +14,7 @@ export function queueState(reactComponent, newState) {
   }
 
   if (!reactComponent.updater.isMounted(reactComponent)) {
-    reactComponent.setState(Object.assign(newState, reactComponent.state));
+    reactComponent.state = Object.assign(newState, reactComponent.state);
     return;
   }
 
