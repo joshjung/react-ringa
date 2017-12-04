@@ -7,14 +7,22 @@ export function unqueueState(reactComponent) {
   delete reactComponent.__ringaStateQueue;
 }
 
-export function queueState(reactComponent, newState) {
+export function queueState(reactComponent, newState, inComponentWillMount = false) {
   if (!reactComponent.state) {
     reactComponent.state = newState;
     return;
   }
 
   if (!reactComponent.updater.isMounted(reactComponent)) {
-    reactComponent.state = Object.assign(newState, reactComponent.state);
+    if (inComponentWillMount) {
+      for (let key in newState) {
+        reactComponent.state[key] = newState[key];
+      }
+    } else {
+      let ns = Object.assign(newState, reactComponent.state);
+      reactComponent.state = ns;
+    }
+
     return;
   }
 
@@ -33,8 +41,8 @@ export function queueState(reactComponent, newState) {
     reactComponent.__ringaStateQueueTimeout = 0;
     reactComponent.setState(reactComponent.__ringaStateQueue);
     if (__DEV__) {
-      if (new Date().getTime() - before > 20) {
-        console.warn('react-ringa __DEV__: component update took longer than 20 milliseconds, consider improving the following component:', reactComponent, 'newState being assigned was: ', newState);
+      if (new Date().getTime() - before > 100) {
+        console.warn('react-ringa __DEV__: component update took longer than 100 milliseconds, consider improving the following component:', reactComponent, 'newState being assigned was: ', newState);
       }
       try {
         reactComponent.$ringaTriggerProperties = Object.keys(reactComponent.__ringaStateQueue);

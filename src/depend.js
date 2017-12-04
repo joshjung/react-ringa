@@ -105,6 +105,7 @@ export function depend(component, watches, handler = undefined, debug = false) {
   };
 
   component.componentWillMount = () => {
+    let inComponentWillMount = true;
     controllers = getAllListeningControllers(component);
 
     if (!controllers.length) {
@@ -145,7 +146,7 @@ export function depend(component, watches, handler = undefined, debug = false) {
           // component should request the specific signals it wants to watch.
           let s = {};
           s[watch.setStateAs || model.name] = model;
-          queueState(component, s);
+          queueState(component, s, inComponentWillMount);
 
           let value, changeHandler;
 
@@ -176,7 +177,7 @@ export function depend(component, watches, handler = undefined, debug = false) {
                   newState = Object.assign(newState, state);
                 });
 
-                queueState(component, newState);
+                queueState(component, newState, inComponentWillMount);
               }
             }.bind(undefined, watch);
 
@@ -226,5 +227,7 @@ export function depend(component, watches, handler = undefined, debug = false) {
     if (_componentWillMount) {
       _componentWillMount();
     }
+
+    inComponentWillMount = false;
   };
 }
