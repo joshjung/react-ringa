@@ -19,7 +19,7 @@ export function domNodeToNearestReactComponent(domNode) {
           // have to search through all the parents to find the first one that has a stateNode that is a React Component
           let curFiber = domNode[key];
 
-          while (curFiber && !(curFiber.stateNode instanceof React.Component)) {
+          while (curFiber && !(curFiber.stateNode instanceof React.Component || typeof curFiber.stateNode === 'function' )) {
             curFiber = curFiber.return;
           }
 
@@ -80,7 +80,7 @@ function _walkReactParents16(component, callback) {
   while (fiber) {
     let item = fiber.stateNode;
 
-    if (item && item instanceof React.Component) {
+    if (item && (item instanceof React.Component || item instanceof Function)) {
       if (ancestors.indexOf(item) === -1) {
         ancestors.push(item);
       }

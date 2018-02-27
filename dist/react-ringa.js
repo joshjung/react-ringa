@@ -121,7 +121,7 @@ function domNodeToNearestReactComponent(domNode) {
           // have to search through all the parents to find the first one that has a stateNode that is a React Component
           var curFiber = domNode[key];
 
-          while (curFiber && !(curFiber.stateNode instanceof _react2.default.Component)) {
+          while (curFiber && !(curFiber.stateNode instanceof _react2.default.Component || typeof curFiber.stateNode === 'function')) {
             curFiber = curFiber.return;
           }
 
@@ -182,7 +182,7 @@ function _walkReactParents16(component, callback) {
   while (fiber) {
     var item = fiber.stateNode;
 
-    if (item && item instanceof _react2.default.Component) {
+    if (item && (item instanceof _react2.default.Component || item instanceof Function)) {
       if (ancestors.indexOf(item) === -1) {
         ancestors.push(item);
       }
@@ -304,13 +304,23 @@ function unqueueState(reactComponent) {
 }
 
 function queueState(reactComponent, newState) {
+  var inComponentWillMount = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+
   if (!reactComponent.state) {
     reactComponent.state = newState;
     return;
   }
 
   if (!reactComponent.updater.isMounted(reactComponent)) {
-    reactComponent.state = Object.assign(newState, reactComponent.state);
+    if (inComponentWillMount) {
+      for (var key in newState) {
+        reactComponent.state[key] = newState[key];
+      }
+    } else {
+      var ns = Object.assign(newState, reactComponent.state);
+      reactComponent.state = ns;
+    }
+
     return;
   }
 
@@ -329,8 +339,8 @@ function queueState(reactComponent, newState) {
     reactComponent.__ringaStateQueueTimeout = 0;
     reactComponent.setState(reactComponent.__ringaStateQueue);
     if (true) {
-      if (new Date().getTime() - before > 20) {
-        console.warn('react-ringa __DEV__: component update took longer than 20 milliseconds, consider improving the following component:', reactComponent, 'newState being assigned was: ', newState);
+      if (new Date().getTime() - before > 100) {
+        console.warn('react-ringa __DEV__: component update took longer than 100 milliseconds, consider improving the following component:', reactComponent, 'newState being assigned was: ', newState);
       }
       try {
         reactComponent.$ringaTriggerProperties = Object.keys(reactComponent.__ringaStateQueue);
@@ -585,6 +595,7 @@ function depend(component, watches) {
   };
 
   component.componentWillMount = function () {
+    var inComponentWillMount = true;
     controllers = (0, _util.getAllListeningControllers)(component);
 
     if (!controllers.length) {
@@ -625,7 +636,7 @@ function depend(component, watches) {
           // component should request the specific signals it wants to watch.
           var s = {};
           s[watch.setStateAs || model.name] = model;
-          (0, _queueState.queueState)(component, s);
+          (0, _queueState.queueState)(component, s, inComponentWillMount);
 
           var value = void 0,
               changeHandler = void 0;
@@ -657,7 +668,7 @@ function depend(component, watches) {
                   newState = Object.assign(newState, state);
                 });
 
-                (0, _queueState.queueState)(component, newState);
+                (0, _queueState.queueState)(component, newState, inComponentWillMount);
               }
             }.bind(undefined, watch);
 
@@ -707,6 +718,8 @@ function depend(component, watches) {
     if (_componentWillMount) {
       _componentWillMount();
     }
+
+    inComponentWillMount = false;
   };
 }
 
