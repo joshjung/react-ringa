@@ -411,7 +411,9 @@ function attach(component, controllerOrModel) {
   component.$ringaControllers = component.$ringaControllers || [];
   component.$ringaControllers.push(controller);
 
-  component.componentDidMount = function () {
+  var postMountFunction = function postMountFunction() {
+    var doNotCallMount = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+
     var domNode = (0, _util.findComponentRoot)(component, refName);
 
     if (bus) {
@@ -425,7 +427,7 @@ function attach(component, controllerOrModel) {
       console.warn('attach(): could not find domNode to set as bus for controller ' + controller);
     }
 
-    if (_componentDidMount) {
+    if (_componentDidMount && !doNotCallMount) {
       _componentDidMount();
     }
 
@@ -433,6 +435,12 @@ function attach(component, controllerOrModel) {
       callback();
     }
   };
+
+  component.componentDidMount = postMountFunction;
+
+  if (component.mounted) {
+    postMountFunction(true);
+  }
 
   component.componentWillUnmount = function () {
     var domNode = (0, _util.findComponentRoot)(component, refName);
@@ -655,15 +663,42 @@ function depend(component, watches) {
 
                 changes.forEach(function (change) {
                   var state = {};
-                  var prop = change.watchedModel.name;
 
                   if (change.propertyObj && change.propertyObj.setStateAs) {
-                    prop = change.propertyObj.setStateAs;
-                  }if (change.watchedPath) {
-                    prop = change.watchedPath.split('.').pop();
+                    /**
+                     * IF dependency(MyModel, 'property', {setStateAs: 'someOtherPropertyName'})
+                     */
+                    state[change.propertyObj.setStateAs] = change.watchedValue;
+                  } else if (change.watchedPath) {
+                    /**
+                     * IF dependency(MyModel, 'property.*')
+                     */
+                    if (change.watchedPath.endsWith('*')) {
+                      /**
+                       * IF dependency(MyModel, 'property.*') AND the signal was directly from MyModel
+                       */
+                      if (change.initial) {
+                        // This only occurs on the initial depend, when no signals have yet been dispatched, so we
+                        // can prepopulate each value.
+                        change.watchedModel.properties.forEach(function (prop) {
+                          state[prop] = change.watchedModel[prop];
+                        });
+                      } else {
+                        state[change.signalPath.split('.').pop()] = change.signalValue;
+                      }
+                    } else {
+                      /**
+                       * IF dependency(MyModel, 'property')
+                       */
+                      var prop = change.watchedPath.split('.').pop();
+                      state[prop] = change.watchedValue;
+                    }
+                  } else {
+                    /**
+                     * IF dependency(MyModel)
+                     */
+                    state[change.watchedModel.name] = change.watchedValue;
                   }
-
-                  state[prop] = change.watchedValue;
 
                   newState = Object.assign(newState, state);
                 });
@@ -676,7 +711,7 @@ function depend(component, watches) {
               var propertyPathObj = void 0;
 
               if ((typeof propertyPath === 'undefined' ? 'undefined' : _typeof(propertyPath)) === 'object') {
-                propertyPathObj = propertyPath;;
+                propertyPathObj = propertyPath;
                 propertyPath = propertyPathObj.propertyPath;
               }
 
@@ -698,7 +733,8 @@ function depend(component, watches) {
                   signalValue: value,
                   watchedPath: propertyPath,
                   watchedValue: value,
-                  propertyPathObj: propertyPathObj
+                  propertyPathObj: propertyPathObj,
+                  initial: true
                 }]);
               }
             });

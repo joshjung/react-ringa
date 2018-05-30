@@ -164,15 +164,42 @@ export function depend(component, watches, handler = undefined, debug = false) {
 
                 changes.forEach(change => {
                   let state = {};
-                  let prop = change.watchedModel.name;
 
                   if (change.propertyObj && change.propertyObj.setStateAs) {
-                    prop = change.propertyObj.setStateAs;
-                  } if (change.watchedPath) {
-                    prop = change.watchedPath.split('.').pop();
+                    /**
+                     * IF dependency(MyModel, 'property', {setStateAs: 'someOtherPropertyName'})
+                     */
+                    state[change.propertyObj.setStateAs] = change.watchedValue;
+                  } else if (change.watchedPath) {
+                    /**
+                     * IF dependency(MyModel, 'property.*')
+                     */
+                    if (change.watchedPath.endsWith('*')) {
+                      /**
+                       * IF dependency(MyModel, 'property.*') AND the signal was directly from MyModel
+                       */
+                      if (change.initial) {
+                        // This only occurs on the initial depend, when no signals have yet been dispatched, so we
+                        // can prepopulate each value.
+                        change.watchedModel.properties.forEach(prop => {
+                          state[prop] = change.watchedModel[prop];
+                        });
+                      } else {
+                        state[change.signalPath.split('.').pop()] = change.signalValue;
+                      }
+                    } else {
+                      /**
+                       * IF dependency(MyModel, 'property')
+                       */
+                      let prop = change.watchedPath.split('.').pop();
+                      state[prop] = change.watchedValue;
+                    }
+                  } else {
+                    /**
+                     * IF dependency(MyModel)
+                     */
+                    state[change.watchedModel.name] = change.watchedValue;
                   }
-
-                  state[prop] = change.watchedValue;
 
                   newState = Object.assign(newState, state);
                 });
@@ -185,7 +212,7 @@ export function depend(component, watches, handler = undefined, debug = false) {
               let propertyPathObj;
 
               if (typeof propertyPath === 'object') {
-                propertyPathObj = propertyPath;;
+                propertyPathObj = propertyPath;
                 propertyPath = propertyPathObj.propertyPath;
               }
 
@@ -207,7 +234,8 @@ export function depend(component, watches, handler = undefined, debug = false) {
                   signalValue: value,
                   watchedPath: propertyPath,
                   watchedValue: value,
-                  propertyPathObj
+                  propertyPathObj,
+                  initial: true
                 }]);
               }
             });

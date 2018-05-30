@@ -37,7 +37,7 @@ export default function attach(component, controllerOrModel, { refName = 'ringaR
   component.$ringaControllers = component.$ringaControllers || [];
   component.$ringaControllers.push(controller);
 
-  component.componentDidMount = () => {
+  const postMountFunction = (doNotCallMount = false) => {
     let domNode = findComponentRoot(component, refName);
 
     if (bus) {
@@ -51,7 +51,7 @@ export default function attach(component, controllerOrModel, { refName = 'ringaR
       console.warn(`attach(): could not find domNode to set as bus for controller ${controller}`);
     }
 
-    if (_componentDidMount) {
+    if (_componentDidMount && !doNotCallMount) {
       _componentDidMount();
     }
 
@@ -59,6 +59,12 @@ export default function attach(component, controllerOrModel, { refName = 'ringaR
       callback();
     }
   };
+
+  component.componentDidMount = postMountFunction;
+
+  if (component.mounted) {
+    postMountFunction(true);
+  }
 
   component.componentWillUnmount = () => {
     let domNode = findComponentRoot(component, refName);
